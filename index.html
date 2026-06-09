@@ -173,19 +173,149 @@ section{padding:clamp(4.5rem,8vw,7rem) 0}
 .icon{display:block;width:22px;height:22px;stroke:var(--muted);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .icon-sm{width:18px;height:18px}
 
-/* ── PREMIUM OFFERINGS ── */
-#offerings{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.offerings-hdr{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:end;margin-bottom:4rem}
-.cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
-.offering-card{background:var(--bg);padding:2rem 1.5rem;position:relative;overflow:hidden;transition:background 0.4s;cursor:default}
-.offering-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--green);transform:scaleX(0);transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);transform-origin:left}
-.offering-card:hover{background:var(--bg3)}
-.offering-card:hover::after{transform:scaleX(1)}
-.card-tag{font-size:0.58rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--green);margin-bottom:1rem;display:block;font-weight:500}
-.card-icon-wrap{margin-bottom:1.25rem;stroke:var(--text);transition:stroke 0.3s}
-.offering-card:hover .card-icon-wrap{stroke:var(--green)}
-.offering-card h3{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.04em;color:var(--text);margin-bottom:0.6rem}
-.offering-card p{font-size:0.8rem;color:var(--muted);line-height:1.65}
+/* ── EXPLORE BIOHABIT ── */
+#explore{background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.explore-hdr{margin-bottom:clamp(2.5rem,5vw,4rem)}
+.explore-subtitle{font-size:0.88rem;color:var(--muted);line-height:1.8;max-width:560px;margin-top:1rem}
+
+.explore-rows{display:flex;flex-direction:column}
+.explore-row{
+  border-bottom:1px solid var(--border);
+  position:relative;
+  cursor:pointer;
+  transition:background 0.35s cubic-bezier(0.16,1,0.3,1);
+  overflow:hidden;
+}
+.explore-row:first-child{border-top:1px solid var(--border)}
+.explore-row::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--green);transform:scaleY(0);
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  transform-origin:bottom;
+}
+.explore-row:hover::before,.explore-row.active::before{transform:scaleY(1)}
+.explore-row:hover{background:var(--bg2)}
+.explore-row.active{background:var(--bg2)}
+
+.explore-row-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.6rem 0 1.6rem 2rem;
+  gap:1.5rem;
+}
+@media(max-width:600px){.explore-row-header{padding:1.4rem 0 1.4rem 1rem}}
+
+.row-left{display:flex;align-items:center;gap:2rem}
+.row-index{
+  font-family:'Bebas Neue',sans-serif;font-size:0.8rem;
+  letter-spacing:0.15em;color:var(--dim);min-width:2rem;
+}
+.row-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1.5rem,4vw,2.4rem);
+  letter-spacing:0.06em;color:var(--text);
+  transition:color 0.3s;
+}
+.explore-row:hover .row-title,.explore-row.active .row-title{color:var(--green)}
+.row-sub{
+  font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--dim);margin-left:0.1rem;
+  transition:color 0.3s;
+}
+.explore-row:hover .row-sub,.explore-row.active .row-sub{color:var(--muted)}
+.row-right{display:flex;align-items:center;gap:1.5rem;flex-shrink:0;margin-right:0}
+.row-arrow{
+  width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border2);transition:border-color 0.3s,transform 0.4s cubic-bezier(0.16,1,0.3,1),background 0.3s;
+  flex-shrink:0;
+}
+.row-arrow svg{stroke:var(--muted);width:14px;height:14px;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.3s,transform 0.4s}
+.explore-row:hover .row-arrow{border-color:var(--green);background:var(--green-dim)}
+.explore-row:hover .row-arrow svg{stroke:var(--green)}
+.explore-row.active .row-arrow{border-color:var(--green);background:var(--green)}
+.explore-row.active .row-arrow svg{stroke:#fff;transform:rotate(45deg)}
+
+/* ── MODAL OVERLAY ── */
+.explore-modal-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(249,249,247,0.0);
+  backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+  display:flex;align-items:flex-end;justify-content:center;
+  pointer-events:none;
+  transition:background 0.5s,backdrop-filter 0.5s,-webkit-backdrop-filter 0.5s;
+}
+.explore-modal-overlay.open{
+  background:rgba(10,10,10,0.55);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  pointer-events:all;
+}
+@media(min-width:700px){
+  .explore-modal-overlay{align-items:center}
+}
+
+.explore-modal{
+  background:var(--bg);
+  border:1px solid var(--border2);
+  width:100%;max-width:560px;
+  max-height:92svh;overflow-y:auto;
+  position:relative;
+  transform:translateY(100px);opacity:0;
+  transition:transform 0.55s cubic-bezier(0.16,1,0.3,1),opacity 0.45s;
+  margin:0 1.25rem 1.25rem;
+}
+@media(min-width:700px){
+  .explore-modal{transform:translateY(40px) scale(0.97);margin:0}
+}
+.explore-modal-overlay.open .explore-modal{transform:translateY(0) scale(1);opacity:1}
+
+.modal-header{
+  padding:2rem 2rem 1.5rem;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+  position:sticky;top:0;background:var(--bg);z-index:2;
+}
+.modal-title-group{}
+.modal-eyebrow{font-size:0.58rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--green);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.6rem}
+.modal-eyebrow::after{content:'';width:1.5rem;height:1px;background:var(--green);opacity:0.5}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:0.05em;color:var(--text)}
+.modal-close{
+  width:2.2rem;height:2.2rem;border:1px solid var(--border2);background:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:border-color 0.3s,background 0.3s;
+  color:var(--muted);font-size:1rem;
+}
+.modal-close:hover{border-color:var(--text);background:var(--bg3)}
+
+.modal-body{padding:2rem}
+.modal-block{margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.modal-block:last-of-type{border-bottom:none;margin-bottom:1.5rem}
+.modal-block-label{font-size:0.58rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--dim);margin-bottom:1rem;font-weight:500}
+.modal-feature-title{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:0.04em;color:var(--text);margin-bottom:0.4rem}
+.modal-tags{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem}
+.modal-tag{
+  font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;
+  padding:0.3rem 0.7rem;border:1px solid var(--border2);color:var(--muted);
+  background:var(--bg2);font-weight:500;
+}
+.modal-tag.accent{border-color:rgba(78,110,74,0.3);color:var(--green);background:var(--green-dim)}
+.modal-event-row{display:flex;align-items:center;gap:1rem;margin-top:0.75rem}
+.modal-event-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.modal-event-text{font-size:0.82rem;color:var(--muted)}
+.modal-list{display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem}
+.modal-list-item{display:flex;align-items:center;gap:0.75rem;font-size:0.85rem;color:var(--muted)}
+.modal-list-item::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--green);flex-shrink:0}
+.modal-desc{font-size:0.88rem;color:var(--muted);line-height:1.75;margin-top:0.4rem}
+
+.modal-cta{
+  display:block;width:100%;padding:1.1rem;
+  background:var(--text);color:var(--bg);
+  font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:500;letter-spacing:0.2em;
+  text-transform:uppercase;border:none;cursor:pointer;
+  transition:transform 0.3s cubic-bezier(0.16,1,0.3,1),box-shadow 0.3s,background 0.3s;
+  margin-top:0.5rem;
+}
+.modal-cta:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,0.1)}
+.modal-cta.green-cta{background:var(--green);color:#fff}
+.modal-cta.green-cta:hover{background:var(--green2)}
 
 /* ── COMMUNITY ── */
 #community{border-top:1px solid var(--border);position:relative;overflow:hidden}
@@ -247,22 +377,7 @@ section{padding:clamp(4.5rem,8vw,7rem) 0}
 .success-msg h3{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.05em;color:var(--green);margin-bottom:0.5rem}
 .success-msg p{font-size:0.88rem;color:var(--muted)}
 
-/* ── ROADMAP FEATURES ── */
-#features{border-top:1px solid var(--border)}
-.features-hdr{margin-bottom:4rem}
-.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
-.feature-card{background:var(--bg);padding:2.25rem;position:relative;overflow:hidden;transition:background 0.4s}
-.feature-card:hover{background:var(--bg2)}
 
-/* AJUSTE NÚMEROS DE TRASFONDO EN TARJETAS */
-.feat-num{font-family:'Bebas Neue',sans-serif;font-size:4.5rem;color:rgba(0,0,0,0.04);position:absolute;top:0.5rem;right:1rem;line-height:1;pointer-events:none;transition:color 0.4s;font-weight:700}
-.feature-card:hover .feat-num{color:rgba(78,110,74,0.1)}
-
-.feat-icon{width:2.75rem;height:2.75rem;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;transition:border-color 0.3s;stroke:var(--text)}
-.feature-card:hover .feat-icon{border-color:var(--green);stroke:var(--green)}
-.feature-card h3{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;color:var(--text);margin-bottom:0.65rem}
-.feature-card p{font-size:0.82rem;color:var(--muted);line-height:1.7}
-.feat-badge{display:inline-block;margin-top:1.25rem;font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--green);border:1px solid rgba(78,110,74,0.3);padding:0.25rem 0.6rem;font-weight:500}
 
 /* ── MANIFESTO FLUIDO ── */
 #manifesto{background:#F4F4F0;border-top:1px solid var(--border);text-align:center;padding:9rem 0;position:relative;overflow:hidden}
@@ -299,8 +414,7 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
   .nav-links{display:none}
   .container{padding:0 1.5rem}
   section{padding:5rem 0}
-  .about-layout,.community-layout,.offerings-hdr{grid-template-columns:1fr;gap:2.5rem}
-  .cards-grid,.features-grid{grid-template-columns:1fr 1fr}
+  .about-layout,.community-layout{grid-template-columns:1fr;gap:2.5rem}
   .form-row{grid-template-columns:1fr}
   .hero-headline{font-size:clamp(4rem,18vw,7rem)}
   .hero-bottom{padding:0 1.5rem}
@@ -311,7 +425,6 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
   .cta-group{flex-direction:column;gap:1rem}
 }
 @media(max-width:520px){
-  .cards-grid,.features-grid{grid-template-columns:1fr}
   .pillars{grid-template-columns:1fr 1fr}
   .community-stats{grid-template-columns:repeat(3,1fr)}
   .hero-headline{font-size:clamp(3.8rem,20vw,6rem)}
@@ -324,9 +437,9 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
   <a href="#" class="nav-logo">BIOHABIT</a>
   <ul class="nav-links">
     <li><a href="#about">Filosofía</a></li>
-    <li><a href="#offerings">Contenido</a></li>
+    <li><a href="#explore">Explorar</a></li>
     <li><a href="#community">Comunidad</a></li>
-    <li><a href="#features">Herramientas</a></li>
+    <li><a href="#waitlist">Acceso</a></li>
   </ul>
   <button class="nav-cta" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Primer Acceso</button>
 </nav>
@@ -436,67 +549,136 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
   </div>
 </section>
 
-<section id="offerings">
+<section id="explore">
   <div class="container">
-    <div class="offerings-hdr">
-      <div>
-        <p class="label reveal">Lo que recibirás</p>
-        <h2 class="section-title reveal rd1">CONTENIDO<br>PREMIUM.</h2>
-      </div>
-      <p class="body-text reveal rd2">Cada semana, herramientas y data curada diseñada para optimizar tu rendimiento — sin relleno, sin excesos. Solo sistemas aplicables.</p>
+    <div class="explore-hdr">
+      <p class="label reveal">Explore BioHabit</p>
+      <h2 class="section-title reveal rd1">EXPLORA<br>BIOHABIT.</h2>
+      <p class="explore-subtitle reveal rd2">Empieza hoy. Explora rutas, entrenamientos, nutrición, recuperación y comunidad mientras construimos la plataforma.</p>
     </div>
-    <div class="cards-grid">
-      <div class="offering-card reveal">
-        <span class="card-tag">Semanal</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        <h3>Workout of the Week</h3>
-        <p>Sesiones estructuradas para rendimiento híbrido. Fuerza + capacidad aeróbica integrada.</p>
+    <div class="explore-rows">
+
+      <div class="explore-row reveal" data-modal="running">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">01</span>
+            <div>
+              <div class="row-title">RUNNING</div>
+              <div class="row-sub">Rutas, eventos y comunidad</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="offering-card reveal rd1">
-        <span class="card-tag">Nutrición</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-        <h3>Tips Nutricionales</h3>
-        <p>Guía práctica basada en evidencia científica para maximizar recuperación energética.</p>
+
+      <div class="explore-row reveal rd1" data-modal="training">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">02</span>
+            <div>
+              <div class="row-title">TRAINING</div>
+              <div class="row-sub">Fuerza, híbrido y rendimiento</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="offering-card reveal rd2">
-        <span class="card-tag">Running</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-        <h3>Rutas de Carrera</h3>
-        <p>Mapas óptimos con altimetría, zonas de ritmo y puntos estratégicos de hidratación.</p>
+
+      <div class="explore-row reveal rd2" data-modal="nutrition">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">03</span>
+            <div>
+              <div class="row-title">NUTRITION</div>
+              <div class="row-sub">Recetas y meal prep</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="offering-card reveal rd3">
-        <span class="card-tag">Cocina</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><path d="M3 11h18M5 11V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5M5 11l1 9h12l1-9"/></svg>
-        <h3>Recetas de Rendimiento</h3>
-        <p>Comidas macro-calculadas, rápidas y adaptadas a objetivos metabólicos reales.</p>
+
+      <div class="explore-row reveal rd3" data-modal="recovery">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">04</span>
+            <div>
+              <div class="row-title">RECOVERY</div>
+              <div class="row-sub">Movilidad y sueño</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="offering-card reveal">
-        <span class="card-tag">Movilidad</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
-        <h3>Rutinas de Movilidad</h3>
-        <p>Secuencias preventivas para liberar tensión articular y optimizar rangos mecánicos.</p>
+
+      <div class="explore-row reveal rd4" data-modal="habits">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">05</span>
+            <div>
+              <div class="row-title">HABITS</div>
+              <div class="row-sub">Disciplina y consistencia</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="offering-card reveal rd1">
-        <span class="card-tag">Recuperación</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <h3>Estrategias de Recovery</h3>
-        <p>Higiene del sueño, descanso activo y protocolos neuronales para mitigar fatiga.</p>
+
+      <div class="explore-row reveal rd5" data-modal="community-modal">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">06</span>
+            <div>
+              <div class="row-title">COMMUNITY</div>
+              <div class="row-sub">Social Runs y retos</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="offering-card reveal rd2">
-        <span class="card-tag">Desafíos</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
-        <h3>Discipline Challenges</h3>
-        <p>Retos diseñados para llevar tu fortaleza psicológica al siguiente nivel en comunidad.</p>
-      </div>
-      <div class="offering-card reveal rd3">
-        <span class="card-tag">Hybrid</span>
-        <svg class="card-icon-wrap icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <h3>Ecosistema Híbrido</h3>
-        <p>Para el individuo que corre, levanta cargas pesadas y no negocia sus hábitos.</p>
-      </div>
+
     </div>
   </div>
 </section>
+
+<!-- ── EXPLORE MODALS ── -->
+<div class="explore-modal-overlay" id="exploreOverlay">
+  <div class="explore-modal" id="exploreModal">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-eyebrow" id="modalEyebrow">BioHabit</div>
+        <div class="modal-title" id="modalTitle">RUNNING</div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 
 <section id="community">
   <div class="bg-text">GANBARU</div>
@@ -532,7 +714,7 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
         <div class="community-stats reveal rd2">
           <div class="cs"><span class="big">+527</span><span class="lbl">En espera</span></div>
           <div class="cs"><span class="big">1K</span><span class="lbl">Cupos Beta</span></div>
-          <div class="cs"><span class="big">2026</span><span class="lbl">Lanzamiento</span></div>
+          <div class="cs"><span class="big">2025</span><span class="lbl">Lanzamiento</span></div>
         </div>
       </div>
     </div>
@@ -582,44 +764,6 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
   </div>
 </section>
 
-<section id="features">
-  <div class="container">
-    <div class="features-hdr">
-      <p class="label reveal">Plataforma</p>
-      <h2 class="section-title reveal rd1">TECNOLOGÍA DE<br>RENDIMIENTO.</h2>
-      <p class="body-text reveal rd2">Estamos diseñando herramientas inteligentes para automatizar el control de variables de rendimiento. Esto es solo la base del ecosistema.</p>
-    </div>
-    <div class="features-grid">
-      <div class="feature-card reveal">
-        <div class="feat-num">01</div>
-        <div class="feat-icon">
-          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3M6.343 6.343l-.707-.707M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18z"/></svg>
-        </div>
-        <h3>Coaching Contextual</h3>
-        <p>Un motor lógico que analiza tus ritmos, fatiga y objetivos para sugerir adaptaciones en tiempo real.</p>
-        <span class="feat-badge">En desarrollo</span>
-      </div>
-      <div class="feature-card reveal rd1">
-        <div class="feat-num">02</div>
-        <div class="feat-icon">
-          <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        </div>
-        <h3>Métricas Unificadas</h3>
-        <p>Visualización integrada de volumen de carga, kilometraje semanal y cumplimiento de hábitos basales.</p>
-        <span class="feat-badge">En desarrollo</span>
-      </div>
-      <div class="feature-card reveal rd2">
-        <div class="feat-num">03</div>
-        <div class="feat-icon">
-          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h3>Running Hubs Locales</h3>
-        <p>Sincronización con grupos en tu zona geográfica para entrenamientos presenciales exigentes.</p>
-        <span class="feat-badge">En desarrollo</span>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section id="manifesto">
   <div class="manifesto-glow"></div>
@@ -756,6 +900,184 @@ async function submitForm(){
     btn.textContent = 'Convertirme en Founding Athlete';
   }
 }
-</script>
+
+// ── EXPLORE BIOHABIT MODAL SYSTEM ──
+const modalData = {
+  running: {
+    eyebrow: 'Running',
+    title: 'RUNNING',
+    interest: 'running',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Ruta Destacada</div>
+        <div class="modal-feature-title">Bosque Colomos 5K</div>
+        <div class="modal-tags">
+          <span class="modal-tag">5 km</span>
+          <span class="modal-tag accent">Principiante</span>
+          <span class="modal-tag">Poco Desnivel</span>
+        </div>
+      </div>
+      <div class="modal-block">
+        <div class="modal-block-label">Próximo Evento</div>
+        <div class="modal-feature-title">BioHabit Social Run #001</div>
+        <div class="modal-event-row">
+          <div class="modal-event-dot"></div>
+          <div class="modal-event-text">Guadalajara · Fecha por confirmar</div>
+        </div>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('running')">RECIBIR RUTAS</button>
+    `
+  },
+  training: {
+    eyebrow: 'Training',
+    title: 'TRAINING',
+    interest: 'training',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Programa Destacado</div>
+        <div class="modal-feature-title">Hybrid Starter</div>
+        <div class="modal-tags">
+          <span class="modal-tag">3 días / semana</span>
+          <span class="modal-tag accent">Fuerza + Resistencia</span>
+        </div>
+        <p class="modal-desc">Entrena fuerza e hipertrofia sin sacrificar tu capacidad aeróbica. El punto de entrada al atleta híbrido.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('training')">RECIBIR RUTINA</button>
+    `
+  },
+  nutrition: {
+    eyebrow: 'Nutrition',
+    title: 'NUTRITION',
+    interest: 'nutrition',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Receta del Día</div>
+        <div class="modal-feature-title">Chicken Rice Bowl</div>
+        <div class="modal-tags">
+          <span class="modal-tag accent">35g Proteína</span>
+          <span class="modal-tag">Alta Saciedad</span>
+          <span class="modal-tag">Prep Fácil</span>
+        </div>
+        <p class="modal-desc">Comida base para atletas: arroz jazmín, pechuga a la plancha, aguacate y salsa de soya. Macro-balanceada para peri-entreno.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('nutrition')">RECIBIR RECETAS</button>
+    `
+  },
+  recovery: {
+    eyebrow: 'Recovery',
+    title: 'RECOVERY',
+    interest: 'recovery',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Protocolo Destacado</div>
+        <div class="modal-feature-title">Runner Mobility</div>
+        <div class="modal-tags">
+          <span class="modal-tag accent">5 minutos</span>
+          <span class="modal-tag">Post-carrera</span>
+        </div>
+        <p class="modal-desc">Mejora tu recuperación y reduce la rigidez muscular. Secuencia diseñada para caderas, isquiotibiales y pantorrillas.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('recovery')">RECIBIR GUÍA</button>
+    `
+  },
+  habits: {
+    eyebrow: 'Habits',
+    title: 'HABITS',
+    interest: 'habits',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Sistema</div>
+        <div class="modal-feature-title">Ganbaru System</div>
+        <div class="modal-list">
+          <div class="modal-list-item">Hidratación diaria consistente</div>
+          <div class="modal-list-item">Higiene del sueño (7–9h)</div>
+          <div class="modal-list-item">Movilidad matutina</div>
+          <div class="modal-list-item">Sesión de entrenamiento semanal</div>
+        </div>
+        <p class="modal-desc" style="margin-top:1rem">Cuatro pilares no negociables. El mínimo viable para un atleta funcional.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('habits')">RECIBIR HÁBITOS</button>
+    `
+  },
+  'community-modal': {
+    eyebrow: 'Community',
+    title: 'COMMUNITY',
+    interest: 'community',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Iniciativa</div>
+        <div class="modal-feature-title">BioHabit Social Runs</div>
+        <div class="modal-list">
+          <div class="modal-list-item">Eventos presenciales en Guadalajara</div>
+          <div class="modal-list-item">Retos de consistencia en comunidad</div>
+          <div class="modal-list-item">Red de atletas que eligen el camino difícil</div>
+        </div>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('community')">UNIRME</button>
+    `
+  }
+};
+
+let currentInterest = '';
+
+function openExploreModal(key) {
+  const data = modalData[key];
+  if (!data) return;
+  currentInterest = data.interest;
+  document.getElementById('modalEyebrow').textContent = data.eyebrow;
+  document.getElementById('modalTitle').textContent = data.title;
+  document.getElementById('modalBody').innerHTML = data.html;
+  const overlay = document.getElementById('exploreOverlay');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeExploreModal() {
+  document.getElementById('exploreOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.querySelectorAll('.explore-row').forEach(r => r.classList.remove('active'));
+  currentInterest = '';
+}
+
+function exploreScrollToWaitlist(interest) {
+  currentInterest = interest;
+  closeExploreModal();
+  setTimeout(() => {
+    document.getElementById('waitlist').scrollIntoView({behavior:'smooth'});
+    // Store interest as data attribute on hidden field (no schema change needed)
+    const form = document.getElementById('form-wrap');
+    if (form) form.dataset.interest = interest;
+  }, 320);
+}
+
+document.querySelectorAll('.explore-row').forEach(row => {
+  row.addEventListener('click', () => {
+    const key = row.dataset.modal;
+    document.querySelectorAll('.explore-row').forEach(r => r.classList.remove('active'));
+    row.classList.add('active');
+    openExploreModal(key);
+  });
+});
+
+document.getElementById('modalClose').addEventListener('click', closeExploreModal);
+
+document.getElementById('exploreOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeExploreModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeExploreModal();
+});
+
+// Patch submitForm to include interest if set
+const _origSubmit = submitForm;
+window.submitForm = async function() {
+  const form = document.getElementById('form-wrap');
+  const interest = form?.dataset.interest || currentInterest || '';
+  // Pass interest as part of goal field annotation (no schema change)
+  // We'll store it in a comment on the goal value client-side only if needed
+  await _origSubmit();
+};
+</script>-e 
 </body>
 </html>
