@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.0/dist/umd/supabase.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -429,6 +430,69 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
   .community-stats{grid-template-columns:repeat(3,1fr)}
   .hero-headline{font-size:clamp(3.8rem,20vw,6rem)}
 }
+
+/* ── ROUTE VIEWER MODAL ── */
+#routeModal{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(10,10,10,0.72);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  align-items:center;justify-content:center;
+}
+#routeModal.open{display:flex}
+#routeModal .route-modal-inner{
+  position:relative;width:100%;max-width:900px;
+  height:88svh;max-height:660px;
+  margin:1rem;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 32px 80px rgba(0,0,0,0.5);
+}
+#map{width:100%;height:100%;background:#1a1e1a}
+.route-info-card{
+  position:absolute;bottom:1.5rem;left:1.5rem;z-index:1000;
+  background:rgba(249,249,247,0.96);
+  border:1px solid rgba(0,0,0,0.12);
+  padding:1.4rem 1.6rem;
+  min-width:220px;max-width:280px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+}
+.route-info-eyebrow{font-size:0.55rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--green);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem}
+.route-info-eyebrow::after{content:'';width:1rem;height:1px;background:var(--green);opacity:0.5}
+.route-info-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:0.05em;color:var(--text);margin-bottom:0.9rem;line-height:1.1}
+.route-stats{display:flex;gap:1.25rem;margin-bottom:1.1rem}
+.route-stat{display:flex;flex-direction:column;gap:0.15rem}
+.route-stat .val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--text)}
+.route-stat .lbl{font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim)}
+.route-date-row{font-size:0.68rem;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+.route-date-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.route-cta-btn{
+  display:block;width:100%;padding:0.85rem;
+  background:var(--text);color:var(--bg);
+  font-family:'DM Sans',sans-serif;font-size:0.65rem;font-weight:500;
+  letter-spacing:0.2em;text-transform:uppercase;border:none;cursor:pointer;
+  transition:background 0.3s,transform 0.3s;
+}
+.route-cta-btn:hover{background:var(--green);transform:translateY(-1px)}
+.route-modal-close{
+  position:absolute;top:1rem;right:1rem;z-index:1001;
+  width:2.2rem;height:2.2rem;
+  background:rgba(249,249,247,0.9);border:1px solid rgba(0,0,0,0.12);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background 0.25s;
+}
+.route-modal-close:hover{background:#fff}
+.route-modal-close svg{width:12px;height:12px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round}
+.route-start-pin,.route-end-pin{
+  width:10px;height:10px;border-radius:50%;
+  border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);
+}
+.route-start-pin{background:#26442F}
+.route-end-pin{background:#0A0A0A}
+/* Swap section selector for Running rows */
+.explore-row[data-modal="running"]:hover .row-title::after{content:' ↗';font-size:0.7em;opacity:0.5}
+@media(max-width:600px){
+  #routeModal .route-modal-inner{height:95svh;max-height:none;margin:0.5rem}
+  .route-info-card{left:0.75rem;bottom:0.75rem;min-width:180px;max-width:calc(100% - 1.5rem)}
+}
 </style>
 </head>
 <body>
@@ -529,7 +593,7 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
         <div class="pillars reveal rd2">
           <div class="pillar">
             <svg class="icon pillar-icon icon-sm" viewBox="0 0 24 24"><path d="M13 4v7h8M3 12a9 9 0 1 0 18 0"/></svg>
-            <h4>Running</h4><p>Clubes y rutas curadas</p>
+            <h4>Running</h4><p>Clubes y rutas guardadas</p>
           </div>
           <div class="pillar">
             <svg class="icon pillar-icon icon-sm" viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 12h11M6.5 17.5H13M3 3h18v18H3z"/></svg>
@@ -807,6 +871,8 @@ footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)
   </div>
 </footer>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script>
 const nav = document.getElementById('nav');
 let ticking = false;
@@ -909,20 +975,44 @@ const modalData = {
     interest: 'running',
     html: `
       <div class="modal-block">
-        <div class="modal-block-label">Ruta Destacada</div>
-        <div class="modal-feature-title">Bosque Colomos 5K</div>
-        <div class="modal-tags">
-          <span class="modal-tag">5 km</span>
-          <span class="modal-tag accent">Principiante</span>
-          <span class="modal-tag">Poco Desnivel</span>
+        <div class="modal-block-label">Rutas Guardadas</div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.25rem">
+          <div style="border:1px solid var(--border2);padding:1rem 1.1rem;cursor:pointer;transition:background 0.3s,border-color 0.3s;background:var(--bg)"
+               onmouseenter="this.style.background='var(--bg2)';this.style.borderColor='var(--green)'"
+               onmouseleave="this.style.background='var(--bg)';this.style.borderColor='var(--border2)'"
+               onclick="openRouteViewer('social-run-ovaclub')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.05em;color:var(--text)">Social Run OVACLUB × POP STRIPS</span>
+              <span style="font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);border:1px solid rgba(78,110,74,0.3);padding:0.2rem 0.5rem">Ver Mapa ↗</span>
+            </div>
+            <div style="display:flex;gap:0.75rem">
+              <span class="modal-tag">4.11 km</span>
+              <span class="modal-tag">+42m</span>
+              <span class="modal-tag accent">GDL</span>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border2);padding:1rem 1.1rem;cursor:pointer;transition:background 0.3s,border-color 0.3s;background:var(--bg)"
+               onmouseenter="this.style.background='var(--bg2)';this.style.borderColor='var(--green)'"
+               onmouseleave="this.style.background='var(--bg)';this.style.borderColor='var(--border2)'"
+               onclick="openRouteViewer('the-habit-run')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.05em;color:var(--text)">KYROS SOCIAL RUN</span>
+              <span style="font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);border:1px solid rgba(78,110,74,0.3);padding:0.2rem 0.5rem">Ver Mapa ↗</span>
+            </div>
+            <div style="display:flex;gap:0.75rem">
+              <span class="modal-tag">5.24 km</span>
+              <span class="modal-tag">+120m</span>
+              <span class="modal-tag accent">GDL</span>
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-block">
         <div class="modal-block-label">Próximo Evento</div>
-        <div class="modal-feature-title">BioHabit Social Run #001</div>
+        <div class="modal-feature-title">THE HABIT RUN </div>
         <div class="modal-event-row">
           <div class="modal-event-dot"></div>
-          <div class="modal-event-text">Guadalajara · Fecha por confirmar</div>
+          <div class="modal-event-text">GDL · Domingo 28 de Junio, 2026 · 7:00 AM</div>
         </div>
       </div>
       <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('running')">RECIBIR RUTAS</button>
@@ -1069,15 +1159,199 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeExploreModal();
 });
 
-// Patch submitForm to include interest if set
-const _origSubmit = submitForm;
-window.submitForm = async function() {
-  const form = document.getElementById('form-wrap');
-  const interest = form?.dataset.interest || currentInterest || '';
-  // Pass interest as part of goal field annotation (no schema change)
-  // We'll store it in a comment on the goal value client-side only if needed
-  await _origSubmit();
+
+// ── ROUTE VIEWER SYSTEM ──
+// ─────────────────────────────────────────────────────────────────────────────
+// GESTIÓN DE RUTAS — Objeto global centralizado.
+// Para añadir rutas: agrega una nueva entrada con la misma estructura.
+// Si en el futuro cargas desde un JSON externo:
+//   fetch('/routes.json').then(r=>r.json()).then(data => Object.assign(BIOHABIT_ROUTES, data))
+// ─────────────────────────────────────────────────────────────────────────────
+const BIOHABIT_ROUTES = {
+  'social-run-ovaclub': {
+    title:     'Social Run OVACLUB × POP STRIPS',
+    distance:  '4.61',
+    elevation: '42',
+    date:      'Sábado 21 de Junio, 2025 · 7:00 AM',
+    location:  'Guadalajara, Jalisco',
+    level:     'Intermedio',
+    points: [{"lat":20.70932506243673,"lng":-103.40894222259523},{"lat":20.708221141503728,"lng":-103.41071248054506},{"lat":20.707709320888448,"lng":-103.41178536415102},{"lat":20.70581255883197,"lng":-103.41349124908449},{"lat":20.706424743888718,"lng":-103.41478943824768},{"lat":20.707583874395493,"lng":-103.41619491577148},{"lat":20.708783138619825,"lng":-103.41767549514772},{"lat":20.70884335247295,"lng":-103.41871082782747},{"lat":20.70858744343195,"lng":-103.42090487480165},{"lat":20.708512175984726,"lng":-103.42363536357881},{"lat":20.708652675189327,"lng":-103.42450439929964},{"lat":20.70836665881409,"lng":-103.42498183250429},{"lat":20.708196052298167,"lng":-103.42514276504518},{"lat":20.708236195025066,"lng":-103.42599570751192},{"lat":20.70826630206327,"lng":-103.4262639284134},{"lat":20.708075624053663,"lng":-103.42632830142976},{"lat":20.708090677589468,"lng":-103.42528223991394},{"lat":20.70825626638454,"lng":-103.42491745948792},{"lat":20.70849712249079,"lng":-103.42467606067659},{"lat":20.708456979832995,"lng":-103.42376410961153},{"lat":20.708411819330273,"lng":-103.42287361621858},{"lat":20.708547300798084,"lng":-103.42020750045778},{"lat":20.708808227728202,"lng":-103.4182870388031},{"lat":20.708642639536173,"lng":-103.41762185096742},{"lat":20.70743835633359,"lng":-103.41617345809937},{"lat":20.70641470808806,"lng":-103.41508448123933},{"lat":20.706028329257066,"lng":-103.41455340385438},{"lat":20.705682092844548,"lng":-103.4139794111252},{"lat":20.705451268130147,"lng":-103.41366291046144},{"lat":20.705566680531284,"lng":-103.41323912143707},{"lat":20.705792487148905,"lng":-103.41306746006013},{"lat":20.706826175370622,"lng":-103.41238081455232},{"lat":20.707192480670155,"lng":-103.41191947460176},{"lat":20.707709320888448,"lng":-103.41106653213502},{"lat":20.7082060879809,"lng":-103.41020286083223},{"lat":20.708838334652768,"lng":-103.40914607048036},{"lat":20.709154456999663,"lng":-103.40840041637422},{"lat":20.709395311678517,"lng":-103.40781569480896},{"lat":20.70948061428549,"lng":-103.40728461742401},{"lat":20.709696379488815,"lng":-103.40725779533388},{"lat":20.709806770869402,"lng":-103.40741336345674},{"lat":20.70974655739905,"lng":-103.40768694877626},{"lat":20.70934011584843,"lng":-103.40882420539856}]
+  },
+  'the-habit-run': {
+    title:     'KYROS SOCIAL RUN',
+    distance:  '6.73',
+    elevation: '120',
+    date:      'Domingo 10 de Mayo, 2026 · 7:00 AM',
+    location:  'Guadalajara, Jalisco',
+    level:     'Intermedio',
+    points: [{"lat":20.69069782914247,"lng":-103.38170170783998},{"lat":20.691801877659415,"lng":-103.38851451873781},{"lat":20.692072870158107,"lng":-103.3917009830475},{"lat":20.69486807934667,"lng":-103.39259684085846},{"lat":20.692976174990644,"lng":-103.3952522277832},{"lat":20.692133090647612,"lng":-103.39662551879883},{"lat":20.69165132606207,"lng":-103.39913606643678},{"lat":20.691530884676606,"lng":-103.40100288391115},{"lat":20.69070786598336,"lng":-103.40271949768068},{"lat":20.690045433060213,"lng":-103.40411424636842},{"lat":20.690286318094216,"lng":-103.40417861938478},{"lat":20.69046698161871,"lng":-103.40378701686859},{"lat":20.69158608699014,"lng":-103.40149641036987},{"lat":20.691877153402046,"lng":-103.40096533298494},{"lat":20.6919775210008,"lng":-103.39918971061708},{"lat":20.692233458077034,"lng":-103.3976447582245},{"lat":20.692574706840276,"lng":-103.39623391628267},{"lat":20.69388449275919,"lng":-103.3948177099228},{"lat":20.69403002382979,"lng":-103.3947265148163},{"lat":20.695425107697268,"lng":-103.39583158493043},{"lat":20.69560576510136,"lng":-103.39576721191408},{"lat":20.695696093722702,"lng":-103.39528441429138},{"lat":20.69612766305993,"lng":-103.39342832565309},{"lat":20.696699741451198,"lng":-103.39103579521179},{"lat":20.69686534268803,"lng":-103.39052617549896},{"lat":20.696453848372013,"lng":-103.39026868343355},{"lat":20.696157772502744,"lng":-103.38994681835176},{"lat":20.696022279963,"lng":-103.38962495326997},{"lat":20.697271817684484,"lng":-103.38876128196718},{"lat":20.69774854623037,"lng":-103.38638484477997},{"lat":20.69715138076208,"lng":-103.38643312454225},{"lat":20.6963384290341,"lng":-103.38637948036195},{"lat":20.69521434045384,"lng":-103.38639020919801},{"lat":20.6934830270129,"lng":-103.38644385337831},{"lat":20.6934278253897,"lng":-103.38620245456697},{"lat":20.693307385414776,"lng":-103.38555335998537},{"lat":20.693242147055088,"lng":-103.38508129119874},{"lat":20.693056468493193,"lng":-103.38434636592866},{"lat":20.69242415600994,"lng":-103.38251709938051},{"lat":20.691671399617004,"lng":-103.38267803192139},{"lat":20.690998934080323,"lng":-103.382785320282},{"lat":20.690808234355735,"lng":-103.38174462318422}]}
 };
-</script>-e 
+
+let leafletMap = null;
+let routeLayer = null;
+
+// importSharedRoute ya no usa Base64 — recibe la clave del objeto global.
+function importSharedRoute(routeKey) {
+  const route = BIOHABIT_ROUTES[routeKey];
+  if (!route) { console.error('Ruta no encontrada:', routeKey); return null; }
+  return route;
+}
+
+function initMap() {
+  if (leafletMap) return;
+  leafletMap = L.map('map', {
+    zoomControl: false,
+    attributionControl: false,
+    scrollWheelZoom: true
+  });
+
+  // Dark minimal tile layer matching BioHabit aesthetic
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    subdomains: 'abcd'
+  }).addTo(leafletMap);
+
+  // Attribution minimal
+  L.control.attribution({prefix: false, position:'bottomright'})
+    .addAttribution('© <a href="https://carto.com/" target="_blank">CARTO</a>')
+    .addTo(leafletMap);
+
+  L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
+}
+
+// openRouteViewer(routeKey) — recibe la clave del objeto BIOHABIT_ROUTES.
+// Ya no usa Base64. El título, distancia, fecha, etc. vienen del objeto.
+function openRouteViewer(routeKey) {
+  const route = importSharedRoute(routeKey);
+  if (!route || !route.points || route.points.length < 2) return;
+
+  // Cerrar modal de explore si está abierto
+  closeExploreModal();
+
+  const modal = document.getElementById('routeModal');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Inicializar mapa en la primera apertura
+  initMap();
+
+  // Remover capa de ruta anterior
+  if (routeLayer) {
+    routeLayer.forEach(l => leafletMap.removeLayer(l));
+    routeLayer = null;
+  }
+
+  const latlngs = route.points.map(p => [p.lat, p.lng]);
+
+  // Polyline de la ruta
+  const line = L.polyline(latlngs, {
+    color: '#26442F',
+    weight: 4.5,
+    opacity: 0.95,
+    lineJoin: 'round',
+    lineCap: 'round'
+  }).addTo(leafletMap);
+
+  // Pin de inicio
+  const startIcon = L.divIcon({
+    className: '',
+    html: '<div class="route-start-pin"></div>',
+    iconSize: [10, 10],
+    iconAnchor: [5, 5]
+  });
+  const startMarker = L.marker(latlngs[0], { icon: startIcon }).addTo(leafletMap);
+
+  // Pin de fin
+  const endIcon = L.divIcon({
+    className: '',
+    html: '<div class="route-end-pin"></div>',
+    iconSize: [10, 10],
+    iconAnchor: [5, 5]
+  });
+  const endMarker = L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(leafletMap);
+
+  routeLayer = [line, startMarker, endMarker];
+
+  // fitBounds garantizado: primero invalidateSize, luego fit dentro del callback
+  const bounds = line.getBounds();
+  leafletMap.invalidateSize();
+  leafletMap.fitBounds(bounds, { padding: [56, 56], animate: false });
+
+  // Segundo pass para asegurar render correcto tras la transición CSS del modal
+  setTimeout(() => {
+    leafletMap.invalidateSize();
+    leafletMap.fitBounds(bounds, { padding: [56, 56] });
+  }, 350);
+
+  // — Info card —
+  document.getElementById('routeCardTitle').textContent = route.title;
+
+  document.getElementById('routeCardStats').innerHTML = `
+    <div class="route-stat"><span class="val">${route.distance} km</span><span class="lbl">Distancia</span></div>
+    <div class="route-stat"><span class="val">+${route.elevation} m</span><span class="lbl">Desnivel</span></div>
+    <div class="route-stat"><span class="val">${route.level || '—'}</span><span class="lbl">Nivel</span></div>
+  `;
+
+  const dateEl = document.getElementById('routeCardDate');
+  if (route.date) {
+    dateEl.innerHTML = `<div class="route-date-dot"></div><span>${route.date} · ${route.location || ''}</span>`;
+    dateEl.style.display = 'flex';
+  } else {
+    dateEl.style.display = 'none';
+  }
+}
+
+function closeRouteViewer() {
+  document.getElementById('routeModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function routeScrollToWaitlist() {
+  closeRouteViewer();
+  setTimeout(() => {
+    document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+    const form = document.getElementById('form-wrap');
+    if (form) form.dataset.interest = 'running';
+  }, 200);
+}
+
+// Close route modal on overlay click — attached after DOM ready (see DOMContentLoaded below)
+
+// Close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeRouteViewer();
+    closeExploreModal();
+  }
+});
+
+// Attach routeModal overlay click once DOM is fully parsed
+document.addEventListener('DOMContentLoaded', () => {
+  const routeModal = document.getElementById('routeModal');
+  if (routeModal) {
+    routeModal.addEventListener('click', function(e) {
+      if (e.target === this) closeRouteViewer();
+    });
+  }
+});
+</script>
+
+<!-- ── ROUTE VIEWER MODAL ── -->
+<div id="routeModal">
+  <div class="route-modal-inner">
+    <div id="map"></div>
+    <div class="route-info-card" id="routeInfoCard">
+      <div class="route-info-eyebrow">BioHabit Running</div>
+      <div class="route-info-title" id="routeCardTitle">—</div>
+      <div class="route-stats" id="routeCardStats"></div>
+      <div class="route-date-row" id="routeCardDate"></div>
+      <button class="route-cta-btn" onclick="routeScrollToWaitlist()">RECIBIR RUTAS</button>
+    </div>
+    <button class="route-modal-close" onclick="closeRouteViewer()" aria-label="Cerrar mapa">
+      <svg viewBox="0 0 14 14"><path d="M1 1l12 12M13 1L1 13"/></svg>
+    </button>
+  </div>
+</div>
+
 </body>
 </html>
