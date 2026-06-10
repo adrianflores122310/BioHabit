@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioHabit — Haz que valga la pena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.0/dist/umd/supabase.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#F9F9F7;
+  --bg2:#F0F0EC;
+  --bg3:#E6E6E0;
+  --bg4:#DCDCD4;
+  --text:#0A0A0A;
+  --muted:#555555;
+  --dim:#7A7A7A;
+  --border:rgba(0,0,0,0.08);
+  --border2:rgba(0,0,0,0.15);
+  --green:#4E6E4A;
+  --green2:#3A5237;
+  --green3:#293B27;
+  --green-dim:rgba(78,110,74,0.06);
+  --green-glow:rgba(78,110,74,0.1);
+}
+
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-weight:300;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+
+/* GRAIN OVERLAY */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:999;
+  pointer-events:none;
+  opacity:0.04;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── REVEAL SYSTEM ── */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity 0.85s cubic-bezier(0.16,1,0.3,1),transform 0.85s cubic-bezier(0.16,1,0.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.rd1{transition-delay:0.08s}.rd2{transition-delay:0.16s}.rd3{transition-delay:0.24s}.rd4{transition-delay:0.32s}.rd5{transition-delay:0.4s}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  padding:1.25rem 2.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:background 0.5s,border-color 0.5s;
+  border-bottom:1px solid transparent;
+}
+nav.scrolled{background:rgba(249,249,247,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom-color:var(--border)}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.12em;color:var(--text);text-decoration:none}
+.nav-links{display:flex;gap:2.5rem;list-style:none}
+.nav-links a{font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.3s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;padding:0.6rem 1.4rem;border:1px solid var(--border2);color:var(--text);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:400;transition:border-color 0.3s,background 0.3s}
+.nav-cta:hover{border-color:var(--green);background:var(--green-dim)}
+
+/* ── HERO ── */
+#hero{
+  position:relative;min-height:100svh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;overflow:hidden;
+  padding:6rem 1.5rem 5rem;
+}
+.hero-video-wrap{position:absolute;inset:0;z-index:0;overflow:hidden}
+.hero-video-placeholder{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 20%,rgba(78,110,74,0.06) 0%,transparent 60%),
+    linear-gradient(to bottom,#F9F9F7 0%,#F0F0EC 50%,#F9F9F7 100%);
+}
+.hero-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(249,249,247,0.3) 0%,transparent 30%,transparent 60%,rgba(249,249,247,0.97) 100%)}
+.hero-grid{
+  position:absolute;inset:0;z-index:1;
+  background-image:linear-gradient(rgba(0,0,0,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.015) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,black 0%,transparent 80%);
+}
+.orb{position:absolute;border-radius:50%;pointer-events:none;z-index:1;filter:blur(80px)}
+.orb-1{width:40vw;height:40vw;top:-5%;left:60%;background:rgba(78,110,74,0.05);animation:drift1 12s ease-in-out infinite}
+.orb-2{width:30vw;height:30vw;top:30%;left:-5%;background:rgba(78,110,74,0.04);animation:drift2 15s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(-3%,5%)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(4%,-4%)}}
+
+.hero-content{position:relative;z-index:2}
+.hero-microcopy{
+  font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--green);margin-bottom:2rem;
+  display:flex;align-items:center;justify-content:center;gap:1rem;
+}
+.hero-microcopy::before,.hero-microcopy::after{content:'';width:2rem;height:1px;background:var(--green);opacity:0.5}
+.hero-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(4.5rem,13vw,13rem);
+  line-height:0.92;letter-spacing:0.02em;color:var(--text);
+  margin-bottom:1rem;
+  will-change:transform;
+}
+.hero-headline .outline{-webkit-text-stroke:1.5px rgba(10,10,10,0.3);color:transparent}
+.hero-tagline{font-family:'DM Serif Display',serif;font-style:italic;font-size:clamp(1rem,2.5vw,1.7rem);color:var(--muted);margin-bottom:1rem;letter-spacing:0.02em}
+.hero-context{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:3rem}
+
+.btn-primary{
+  display:inline-block;padding:1rem 2.5rem;
+  background:var(--text);color:#F9F9F7;
+  font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;
+  font-weight:500;cursor:pointer;border:none;
+  font-family:'DM Sans',sans-serif;
+  transition:transform 0.3s cubic-bezier(0.16,1,0.3,1),box-shadow 0.3s;
+  text-decoration:none;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(10,10,10,0.08)}
+
+.hero-social-proof{margin-top:2rem;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;justify-content:center;gap:0.75rem}
+.proof-dot{width:4px;height:4px;border-radius:50%;background:var(--green);display:inline-block}
+.hero-bottom{position:absolute;bottom:2.5rem;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;padding:0 2.5rem}
+.hero-location{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim)}
+.scroll-hint{display:flex;flex-direction:column;align-items:center;gap:0.5rem;font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim)}
+.scroll-line{width:1px;height:3.5rem;background:linear-gradient(to bottom,var(--dim),transparent);animation:pulse-line 2.5s ease-in-out infinite}
+@keyframes pulse-line{0%,100%{opacity:0.3;transform:scaleY(1)}50%{opacity:0.8;transform:scaleY(0.75)}}
+
+/* ── TICKER ── */
+.ticker-wrap{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:0.9rem 0;background:var(--bg2)}
+.ticker{display:flex;gap:3rem;animation:ticker 30s linear infinite;white-space:nowrap;will-change:transform}
+.ticker span{font-family:'Bebas Neue',sans-serif;font-size:0.85rem;letter-spacing:0.22em;color:var(--dim);text-transform:uppercase;flex-shrink:0}
+.ticker span.g{color:var(--green);opacity:0.7}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── SHARED STRUCTURE ── */
+section{padding:clamp(4.5rem,8vw,7rem) 0}
+.container{max-width:1180px;margin:0 auto;padding:0 2.5rem}
+.label{font-size:0.62rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--green);margin-bottom:1.25rem;display:flex;align-items:center;gap:0.8rem}
+.label::after{content:'';width:2rem;height:1px;background:var(--green);opacity:0.4}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,6vw,5.5rem);line-height:1;letter-spacing:0.02em;color:var(--text);margin-bottom:1.25rem}
+.body-text{font-size:1rem;color:var(--muted);line-height:1.85;max-width:540px}
+
+/* ── CONCEPT & PILLARS ── */
+#about{border-top:1px solid var(--border)}
+.about-layout{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+.about-right{display:flex;flex-direction:column;gap:1.5rem}
+.philosophy-card{padding:2rem;border:1px solid var(--border);background:var(--bg2);position:relative;overflow:hidden}
+.philosophy-card::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:var(--green);opacity:0.6}
+.philosophy-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top left,var(--green-dim),transparent 60%)}
+
+/* AJUSTE LETRAS JAPONESAS (MÁS VISIBLES) */
+.kanji{font-size:3.5rem;color:rgba(0,0,0,0.15);font-family:serif;line-height:1;margin-bottom:0.4rem;font-weight:700}
+
+.philosophy-card h3{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.08em;color:var(--green);margin-bottom:0.4rem}
+.philosophy-card p{font-size:0.85rem;color:var(--muted);line-height:1.7;position:relative;z-index:1}
+.pillars{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.pillar{background:var(--bg);padding:1.4rem;transition:background 0.35s}
+.pillar:hover{background:var(--bg2)}
+.pillar-icon{margin-bottom:0.75rem;opacity:0.85;stroke:var(--text)}
+.pillar h4{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text);margin-bottom:0.25rem;font-weight:500}
+.pillar p{font-size:0.75rem;color:var(--dim);line-height:1.5}
+.icon{display:block;width:22px;height:22px;stroke:var(--muted);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.icon-sm{width:18px;height:18px}
+
+/* ── EXPLORE BIOHABIT ── */
+#explore{background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.explore-hdr{margin-bottom:clamp(2.5rem,5vw,4rem)}
+.explore-subtitle{font-size:0.88rem;color:var(--muted);line-height:1.8;max-width:560px;margin-top:1rem}
+
+.explore-rows{display:flex;flex-direction:column}
+.explore-row{
+  border-bottom:1px solid var(--border);
+  position:relative;
+  cursor:pointer;
+  transition:background 0.35s cubic-bezier(0.16,1,0.3,1);
+  overflow:hidden;
+}
+.explore-row:first-child{border-top:1px solid var(--border)}
+.explore-row::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--green);transform:scaleY(0);
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  transform-origin:bottom;
+}
+.explore-row:hover::before,.explore-row.active::before{transform:scaleY(1)}
+.explore-row:hover{background:var(--bg2)}
+.explore-row.active{background:var(--bg2)}
+
+.explore-row-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.6rem 0 1.6rem 2rem;
+  gap:1.5rem;
+}
+@media(max-width:600px){.explore-row-header{padding:1.4rem 0 1.4rem 1rem}}
+
+.row-left{display:flex;align-items:center;gap:2rem}
+.row-index{
+  font-family:'Bebas Neue',sans-serif;font-size:0.8rem;
+  letter-spacing:0.15em;color:var(--dim);min-width:2rem;
+}
+.row-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1.5rem,4vw,2.4rem);
+  letter-spacing:0.06em;color:var(--text);
+  transition:color 0.3s;
+}
+.explore-row:hover .row-title,.explore-row.active .row-title{color:var(--green)}
+.row-sub{
+  font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--dim);margin-left:0.1rem;
+  transition:color 0.3s;
+}
+.explore-row:hover .row-sub,.explore-row.active .row-sub{color:var(--muted)}
+.row-right{display:flex;align-items:center;gap:1.5rem;flex-shrink:0;margin-right:0}
+.row-arrow{
+  width:1.8rem;height:1.8rem;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border2);transition:border-color 0.3s,transform 0.4s cubic-bezier(0.16,1,0.3,1),background 0.3s;
+  flex-shrink:0;
+}
+.row-arrow svg{stroke:var(--muted);width:14px;height:14px;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.3s,transform 0.4s}
+.explore-row:hover .row-arrow{border-color:var(--green);background:var(--green-dim)}
+.explore-row:hover .row-arrow svg{stroke:var(--green)}
+.explore-row.active .row-arrow{border-color:var(--green);background:var(--green)}
+.explore-row.active .row-arrow svg{stroke:#fff;transform:rotate(45deg)}
+
+/* ── MODAL OVERLAY ── */
+.explore-modal-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(249,249,247,0.0);
+  backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+  display:flex;align-items:flex-end;justify-content:center;
+  pointer-events:none;
+  transition:background 0.5s,backdrop-filter 0.5s,-webkit-backdrop-filter 0.5s;
+}
+.explore-modal-overlay.open{
+  background:rgba(10,10,10,0.55);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  pointer-events:all;
+}
+@media(min-width:700px){
+  .explore-modal-overlay{align-items:center}
+}
+
+.explore-modal{
+  background:var(--bg);
+  border:1px solid var(--border2);
+  width:100%;max-width:560px;
+  max-height:92svh;overflow-y:auto;
+  position:relative;
+  transform:translateY(100px);opacity:0;
+  transition:transform 0.55s cubic-bezier(0.16,1,0.3,1),opacity 0.45s;
+  margin:0 1.25rem 1.25rem;
+}
+@media(min-width:700px){
+  .explore-modal{transform:translateY(40px) scale(0.97);margin:0}
+}
+.explore-modal-overlay.open .explore-modal{transform:translateY(0) scale(1);opacity:1}
+
+.modal-header{
+  padding:2rem 2rem 1.5rem;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+  position:sticky;top:0;background:var(--bg);z-index:2;
+}
+.modal-title-group{}
+.modal-eyebrow{font-size:0.58rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--green);margin-bottom:0.4rem;display:flex;align-items:center;gap:0.6rem}
+.modal-eyebrow::after{content:'';width:1.5rem;height:1px;background:var(--green);opacity:0.5}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:0.05em;color:var(--text)}
+.modal-close{
+  width:2.2rem;height:2.2rem;border:1px solid var(--border2);background:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:border-color 0.3s,background 0.3s;
+  color:var(--muted);font-size:1rem;
+}
+.modal-close:hover{border-color:var(--text);background:var(--bg3)}
+
+.modal-body{padding:2rem}
+.modal-block{margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.modal-block:last-of-type{border-bottom:none;margin-bottom:1.5rem}
+.modal-block-label{font-size:0.58rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--dim);margin-bottom:1rem;font-weight:500}
+.modal-feature-title{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:0.04em;color:var(--text);margin-bottom:0.4rem}
+.modal-tags{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem}
+.modal-tag{
+  font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;
+  padding:0.3rem 0.7rem;border:1px solid var(--border2);color:var(--muted);
+  background:var(--bg2);font-weight:500;
+}
+.modal-tag.accent{border-color:rgba(78,110,74,0.3);color:var(--green);background:var(--green-dim)}
+.modal-event-row{display:flex;align-items:center;gap:1rem;margin-top:0.75rem}
+.modal-event-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.modal-event-text{font-size:0.82rem;color:var(--muted)}
+.modal-list{display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem}
+.modal-list-item{display:flex;align-items:center;gap:0.75rem;font-size:0.85rem;color:var(--muted)}
+.modal-list-item::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--green);flex-shrink:0}
+.modal-desc{font-size:0.88rem;color:var(--muted);line-height:1.75;margin-top:0.4rem}
+
+.modal-cta{
+  display:block;width:100%;padding:1.1rem;
+  background:var(--text);color:var(--bg);
+  font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:500;letter-spacing:0.2em;
+  text-transform:uppercase;border:none;cursor:pointer;
+  transition:transform 0.3s cubic-bezier(0.16,1,0.3,1),box-shadow 0.3s,background 0.3s;
+  margin-top:0.5rem;
+}
+.modal-cta:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,0.1)}
+.modal-cta.green-cta{background:var(--green);color:#fff}
+.modal-cta.green-cta:hover{background:var(--green2)}
+
+/* ── COMMUNITY ── */
+#community{border-top:1px solid var(--border);position:relative;overflow:hidden}
+
+/* AJUSTE TEXTO GIGANTE DE FONDO (MÁS VISIBLE) */
+.bg-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Bebas Neue',sans-serif;font-size:18vw;color:rgba(0,0,0,0.025);white-space:nowrap;pointer-events:none;letter-spacing:0.04em;font-weight:700}
+
+.community-layout{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;position:relative}
+.community-types{display:flex;flex-direction:column}
+.community-type{padding:1.25rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1.5rem;transition:padding-left 0.35s cubic-bezier(0.16,1,0.3,1)}
+.community-type:first-child{border-top:1px solid var(--border)}
+.community-type:hover{padding-left:0.6rem}
+.ct-num{font-family:'Bebas Neue',sans-serif;font-size:0.85rem;color:var(--dim);min-width:1.8rem}
+.ct-label{font-size:0.95rem;font-weight:400;color:var(--text);flex:1}
+.ct-arrow{color:var(--dim);transition:color 0.3s,transform 0.3s;width:14px;height:14px;stroke:var(--dim);fill:none;flex-shrink:0}
+.community-type:hover .ct-arrow{stroke:var(--green);transform:translateX(4px)}
+.community-right{display:flex;flex-direction:column;gap:1.5rem}
+.community-quote{padding:2rem;border:1px solid var(--border);background:var(--bg2);position:relative}
+.community-quote::before{content:'"';position:absolute;top:-0.5rem;left:1.5rem;font-family:'DM Serif Display',serif;font-size:5rem;color:var(--green);opacity:0.25;line-height:1}
+.community-quote p{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.2rem;color:var(--text);line-height:1.6;position:relative;z-index:1}
+.community-quote .attr{margin-top:0.75rem;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);font-style:normal;font-family:'DM Sans',sans-serif}
+.community-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.cs{background:var(--bg2);padding:1.25rem;text-align:center}
+.cs .big{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:0.04em;color:var(--text);display:block}
+.cs .lbl{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim)}
+
+/* ── WAITLIST AREA ── */
+#waitlist{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.waitlist-inner{max-width:660px;margin:0 auto;text-align:center}
+.waitlist-inner .label{justify-content:center}
+.waitlist-inner .label::after{display:none}
+.waitlist-inner .label::before{content:'';width:2rem;height:1px;background:var(--green);opacity:0.4}
+.waitlist-form{margin-top:3rem;display:flex;flex-direction:column;gap:1rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-field{display:flex;flex-direction:column;gap:0.4rem;text-align:left}
+.form-field label{font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.form-field input,.form-field select{
+  background:var(--bg);border:1px solid var(--border2);color:var(--text);
+  padding:0.9rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:300;
+  outline:none;transition:border-color 0.3s,background 0.3s;
+  -webkit-appearance:none;appearance:none;width:100%;
+}
+.form-field input:focus,.form-field select:focus{border-color:var(--green);background:var(--bg)}
+.form-field input::placeholder{color:var(--dim)}
+.form-field select option{background:var(--bg);color:var(--text)}
+.form-submit{
+  width:100%;padding:1.05rem;background:var(--text);color:var(--bg);border:none;
+  font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:500;letter-spacing:0.2em;
+  text-transform:uppercase;cursor:pointer;transition:transform 0.3s,box-shadow 0.3s,background 0.3s,color 0.3s;
+  margin-top:0.25rem;
+}
+.form-submit:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,0.08)}
+.form-submit.loading{background:var(--bg4);color:var(--dim);transform:none;box-shadow:none}
+.form-submit.success{background:transparent;color:var(--green);border:1px solid var(--green2)}
+.form-privacy{font-size:0.68rem;color:var(--dim);margin-top:0.5rem}
+.success-msg{display:none;text-align:center;padding:3rem 1rem}
+.success-msg.show{display:block}
+.success-icon{margin-bottom:1rem;stroke:var(--green);display:block;margin-left:auto;margin-right:auto}
+.success-msg h3{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.05em;color:var(--green);margin-bottom:0.5rem}
+.success-msg p{font-size:0.88rem;color:var(--muted)}
+
+
+
+/* ── MANIFESTO FLUIDO ── */
+#manifesto{background:#F4F4F0;border-top:1px solid var(--border);text-align:center;padding:9rem 0;position:relative;overflow:hidden}
+.manifesto-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60vw;height:50vh;background:radial-gradient(ellipse,rgba(78,110,74,0.04) 0%,transparent 70%);pointer-events:none}
+.manifesto-eyebrow{font-size:0.62rem;letter-spacing:0.35em;text-transform:uppercase;color:var(--dim);margin-bottom:3.5rem;display:flex;align-items:center;justify-content:center;gap:1.5rem}
+.manifesto-eyebrow::before,.manifesto-eyebrow::after{content:'';width:4rem;height:1px;background:var(--dim);opacity:0.3}
+.manifesto-line{width:1px;height:4rem;background:linear-gradient(to bottom,var(--green),transparent);margin:0 auto 2.5rem;opacity:0.4}
+.manifesto-quote{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4.5vw,4rem);color:var(--text);line-height:1.28;max-width:820px;margin:0 auto 2.5rem}
+.manifesto-attr{font-size:0.68rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--dim)}
+.manifesto-sub{font-size:0.92rem;color:var(--muted);max-width:560px;margin:2.5rem auto 0;line-height:1.85}
+
+/* ── FINAL ESCALATION CALL TO ACTION ── */
+#final-cta{border-top:1px solid var(--border);text-align:center;padding:9rem 0;position:relative;overflow:hidden}
+.cta-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 50% 50%,rgba(78,110,74,0.05) 0%,transparent 70%)}
+.final-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,8vw,8rem);line-height:1;letter-spacing:0.02em;color:var(--text);margin-bottom:1.25rem;position:relative}
+.final-sub{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.2rem;color:var(--muted);margin-bottom:2.5rem;position:relative}
+.cta-group{display:flex;align-items:center;justify-content:center;gap:1.5rem;position:relative;flex-wrap:wrap}
+.btn-ghost{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color 0.3s}
+.btn-ghost:hover{color:var(--text)}
+.final-proof{margin-top:2rem;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);position:relative}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:2.5rem 0;background:var(--bg2)}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:0.12em;color:var(--text);text-decoration:none}
+.footer-links{display:flex;align-items:center;gap:2rem}
+.footer-links a{font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color 0.3s}
+.footer-links a:hover{color:var(--green)}
+.footer-right{font-size:0.65rem;color:var(--dim);letter-spacing:0.05em}
+
+/* ── RESPONSIVE DESIGN (BREAKPOINTS) ── */
+@media(max-width:900px){
+  nav{padding:1rem 1.5rem}
+  .nav-links{display:none}
+  .container{padding:0 1.5rem}
+  section{padding:5rem 0}
+  .about-layout,.community-layout{grid-template-columns:1fr;gap:2.5rem}
+  .form-row{grid-template-columns:1fr}
+  .hero-headline{font-size:clamp(4rem,18vw,7rem)}
+  .hero-bottom{padding:0 1.5rem}
+  .manifesto-quote{font-size:clamp(1.6rem,6vw,3rem)}
+  .final-title{font-size:clamp(3rem,12vw,7rem)}
+  .footer-inner{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+  .cta-group{flex-direction:column;gap:1rem}
+}
+@media(max-width:520px){
+  .pillars{grid-template-columns:1fr 1fr}
+  .community-stats{grid-template-columns:repeat(3,1fr)}
+  .hero-headline{font-size:clamp(3.8rem,20vw,6rem)}
+}
+
+/* ── ROUTE VIEWER MODAL ── */
+#routeModal{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(10,10,10,0.72);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  align-items:center;justify-content:center;
+}
+#routeModal.open{display:flex}
+#routeModal .route-modal-inner{
+  position:relative;width:100%;max-width:900px;
+  height:88svh;max-height:660px;
+  margin:1rem;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 32px 80px rgba(0,0,0,0.5);
+}
+#map{width:100%;height:100%;background:#1a1e1a}
+.route-info-card{
+  position:absolute;bottom:1.5rem;left:1.5rem;z-index:1000;
+  background:rgba(249,249,247,0.96);
+  border:1px solid rgba(0,0,0,0.12);
+  padding:1.4rem 1.6rem;
+  min-width:220px;max-width:280px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+}
+.route-info-eyebrow{font-size:0.55rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--green);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem}
+.route-info-eyebrow::after{content:'';width:1rem;height:1px;background:var(--green);opacity:0.5}
+.route-info-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:0.05em;color:var(--text);margin-bottom:0.9rem;line-height:1.1}
+.route-stats{display:flex;gap:1.25rem;margin-bottom:1.1rem}
+.route-stat{display:flex;flex-direction:column;gap:0.15rem}
+.route-stat .val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--text)}
+.route-stat .lbl{font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim)}
+.route-date-row{font-size:0.68rem;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+.route-date-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.route-cta-btn{
+  display:block;width:100%;padding:0.85rem;
+  background:var(--text);color:var(--bg);
+  font-family:'DM Sans',sans-serif;font-size:0.65rem;font-weight:500;
+  letter-spacing:0.2em;text-transform:uppercase;border:none;cursor:pointer;
+  transition:background 0.3s,transform 0.3s;
+}
+.route-cta-btn:hover{background:var(--green);transform:translateY(-1px)}
+.route-modal-close{
+  position:absolute;top:1rem;right:1rem;z-index:1001;
+  width:2.2rem;height:2.2rem;
+  background:rgba(249,249,247,0.9);border:1px solid rgba(0,0,0,0.12);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background 0.25s;
+}
+.route-modal-close:hover{background:#fff}
+.route-modal-close svg{width:12px;height:12px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round}
+.route-start-pin,.route-end-pin{
+  width:10px;height:10px;border-radius:50%;
+  border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);
+}
+.route-start-pin{background:#26442F}
+.route-end-pin{background:#0A0A0A}
+/* Swap section selector for Running rows */
+.explore-row[data-modal="running"]:hover .row-title::after{content:' ↗';font-size:0.7em;opacity:0.5}
+@media(max-width:600px){
+  #routeModal .route-modal-inner{height:95svh;max-height:none;margin:0.5rem}
+  .route-info-card{left:0.75rem;bottom:0.75rem;min-width:180px;max-width:calc(100% - 1.5rem)}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#" class="nav-logo">BIOHABIT</a>
+  <ul class="nav-links">
+    <li><a href="#about">Filosofía</a></li>
+    <li><a href="#explore">Explorar</a></li>
+    <li><a href="#community">Comunidad</a></li>
+    <li><a href="#waitlist">Acceso</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Primer Acceso</button>
+</nav>
+
+<section id="hero">
+  <div class="hero-video-wrap">
+    <div class="hero-video-placeholder"></div>
+  </div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <p class="hero-microcopy reveal">Próximamente · Primera oleada</p>
+    <h1 class="hero-headline reveal rd1">
+      HAZ QUE<br>
+      <span class="outline">VALGA</span><br>
+      LA PENA
+    </h1>
+    <p class="hero-tagline reveal rd2">Disciplina. Consistencia. Propósito.</p>
+    <p class="hero-context reveal rd3">Construido para el atleta híbrido y la mente disciplinada.</p>
+    <button class="btn-primary reveal rd4" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">
+      Únete a los primeros atletas
+    </button>
+    <p class="hero-social-proof reveal rd5">
+      <span class="proof-dot"></span>
+      +527 atletas ya en lista de espera
+    </p>
+  </div>
+
+  <div class="hero-bottom">
+    <span class="hero-location">Ganbaru Culture</span>
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+    <span class="hero-location">5:12 AM · Before Chaos</span>
+  </div>
+</section>
+
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span>Entrenamiento</span><span class="g">·</span>
+    <span>Nutrición</span><span class="g">·</span>
+    <span>Running</span><span class="g">·</span>
+    <span>Hábitos</span><span class="g">·</span>
+    <span>Bienestar</span><span class="g">·</span>
+    <span>Comunidad</span><span class="g">·</span>
+    <span>Fuerza</span><span class="g">·</span>
+    <span>Propósito</span><span class="g">·</span>
+    <span>Ganbaru</span><span class="g">·</span>
+    <span>Discipline</span><span class="g">·</span>
+    <span>Entrenamiento</span><span class="g">·</span>
+    <span>Nutrición</span><span class="g">·</span>
+    <span>Running</span><span class="g">·</span>
+    <span>Hábitos</span><span class="g">·</span>
+    <span>Bienestar</span><span class="g">·</span>
+    <span>Comunidad</span><span class="g">·</span>
+    <span>Fuerza</span><span class="g">·</span>
+    <span>Propósito</span><span class="g">·</span>
+    <span>Ganbaru</span><span class="g">·</span>
+    <span>Discipline</span><span class="g">·</span>
+  </div>
+</div>
+
+<section id="about">
+  <div class="container">
+    <div class="about-layout">
+      <div>
+        <p class="label reveal">Qué es BioHabit</p>
+        <h2 class="section-title reveal rd1">LA MAYORÍA DE<br>LAS APPS SE<br>EQUIVOCAN.</h2>
+        <p class="body-text reveal rd2">
+          La mayoría de las plataformas de fitness solo cuentan calorías y repeticiones vacías. <span style="color:var(--text); font-style:italic; font-family:'DM Serif Display',serif;">Nosotros creemos que el verdadero cambio viene desde adentro.</span>
+        </p>
+        <br>
+        <p class="body-text reveal rd3" style="font-size:0.9rem;">
+          BioHabit es un ecosistema diseñado para atletas híbridos, profesionales enfocados y personas que se niegan a conformarse con lo ordinario. No te damos una app efímera, te ayudamos a forjar una identidad inquebrantable.
+        </p>
+      </div>
+      <div class="about-right">
+        <div class="philosophy-card reveal rd1">
+          <div class="kanji">頑張る</div>
+          <h3>Ganbaru</h3>
+          <p>Continuar hacia adelante con disciplina implacable incluso cuando las ganas se han ido. Esta es la raíz conceptual de cada línea de código que escribimos.</p>
+        </div>
+        <div class="pillars reveal rd2">
+          <div class="pillar">
+            <svg class="icon pillar-icon icon-sm" viewBox="0 0 24 24"><path d="M13 4v7h8M3 12a9 9 0 1 0 18 0"/></svg>
+            <h4>Running</h4><p>Clubes y rutas guardadas</p>
+          </div>
+          <div class="pillar">
+            <svg class="icon pillar-icon icon-sm" viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 12h11M6.5 17.5H13M3 3h18v18H3z"/></svg>
+            <h4>Fuerza</h4><p>Planes de entrenamiento</p>
+          </div>
+          <div class="pillar">
+            <svg class="icon pillar-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            <h4>Nutrición</h4><p>Guía y recetas reales</p>
+          </div>
+          <div class="pillar">
+            <svg class="icon pillar-icon icon-sm" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
+            <h4>Hábitos</h4><p>Sistemas de consistencia</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="explore">
+  <div class="container">
+    <div class="explore-hdr">
+      <p class="label reveal">Explore BioHabit</p>
+      <h2 class="section-title reveal rd1">EXPLORA<br>BIOHABIT.</h2>
+      <p class="explore-subtitle reveal rd2">Empieza hoy. Explora rutas, entrenamientos, nutrición, recuperación y comunidad mientras construimos la plataforma.</p>
+    </div>
+    <div class="explore-rows">
+
+      <div class="explore-row reveal" data-modal="running">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">01</span>
+            <div>
+              <div class="row-title">RUNNING</div>
+              <div class="row-sub">Rutas, eventos y comunidad</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explore-row reveal rd1" data-modal="training">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">02</span>
+            <div>
+              <div class="row-title">TRAINING</div>
+              <div class="row-sub">Fuerza, híbrido y rendimiento</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explore-row reveal rd2" data-modal="nutrition">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">03</span>
+            <div>
+              <div class="row-title">NUTRITION</div>
+              <div class="row-sub">Recetas y meal prep</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explore-row reveal rd3" data-modal="recovery">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">04</span>
+            <div>
+              <div class="row-title">RECOVERY</div>
+              <div class="row-sub">Movilidad y sueño</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explore-row reveal rd4" data-modal="habits">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">05</span>
+            <div>
+              <div class="row-title">HABITS</div>
+              <div class="row-sub">Disciplina y consistencia</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explore-row reveal rd5" data-modal="community-modal">
+        <div class="explore-row-header">
+          <div class="row-left">
+            <span class="row-index">06</span>
+            <div>
+              <div class="row-title">COMMUNITY</div>
+              <div class="row-sub">Social Runs y retos</div>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="row-arrow">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── EXPLORE MODALS ── -->
+<div class="explore-modal-overlay" id="exploreOverlay">
+  <div class="explore-modal" id="exploreModal">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-eyebrow" id="modalEyebrow">BioHabit</div>
+        <div class="modal-title" id="modalTitle">RUNNING</div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<section id="community">
+  <div class="bg-text">GANBARU</div>
+  <div class="container">
+    <div class="community-layout">
+      <div>
+        <p class="label reveal">Comunidad</p>
+        <h2 class="section-title reveal rd1">PARA LOS QUE<br>ELIGEN EL<br>CAMINO DIFÍCIL.</h2>
+        <p class="body-text reveal rd2" style="margin-bottom:2.5rem">BioHabit une a los que entrenan cuando nadie está mirando, los que sacrifican la comodidad inmediata por el progreso a largo plazo.</p>
+        <div class="community-types">
+          <div class="community-type reveal">
+            <span class="ct-num">01</span>
+            <span class="ct-label">Atletas Híbridos / Corredores / Triatletas</span>
+            <svg class="ct-arrow" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="community-type reveal rd1">
+            <span class="ct-num">02</span>
+            <span class="ct-label">Mentes Enfocadas (Estudiantes y Emprendedores)</span>
+            <svg class="ct-arrow" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="community-type reveal rd2">
+            <span class="ct-num">03</span>
+            <span class="ct-label">Buscadores de Alto Rendimiento Humano</span>
+            <svg class="ct-arrow" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="community-right">
+        <div class="community-quote reveal rd1">
+          <p>El progreso jamás es lineal. La disciplina, por otro lado, debe ser absoluta.</p>
+          <div class="attr">— Axioma BioHabit</div>
+        </div>
+        <div class="community-stats reveal rd2">
+          <div class="cs"><span class="big">+527</span><span class="lbl">En espera</span></div>
+          <div class="cs"><span class="big">1K</span><span class="lbl">Cupos Beta</span></div>
+          <div class="cs"><span class="big">2025</span><span class="lbl">Lanzamiento</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="waitlist">
+  <div class="container">
+    <div class="waitlist-inner">
+      <p class="label reveal">Founding Athletes</p>
+      <h2 class="section-title reveal rd1" style="font-size:clamp(2.5rem,6vw,4.5rem)">APLICA PARA<br>ACCESO TEMPRANO.</h2>
+      <p class="body-text reveal rd2" style="margin:0 auto;text-align:center;font-size:0.92rem">
+        Asegura un lugar en la primera oleada de BioHabit. Los primeros 1,000 miembros obtienen acceso prioritario al ecosistema y tarifa de fundador de por vida.
+      </p>
+
+      <div id="form-wrap" class="waitlist-form reveal rd3">
+        <div class="form-row">
+          <div class="form-field">
+            <label>Nombre</label>
+            <input type="text" id="fname" placeholder="Tu nombre">
+          </div>
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" id="femail" placeholder="tu@email.com">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Objetivo principal</label>
+          <select id="fgoal">
+            <option value="" disabled selected>Selecciona tu foco actual</option>
+            <option>Optimizar mi Running</option>
+            <option>Desarrollar Fuerza Híbrida</option>
+            <option>Construir Sistemas de Hábitos</option>
+            <option>Optimización Nutricional Avanzada</option>
+          </select>
+        </div>
+        <button class="form-submit" id="fsub" onclick="submitForm()">Convertirme en Founding Athlete</button>
+        <p class="form-privacy">Cero ruido. Solo lo que aporta valor. Desvincúlate cuando desees.</p>
+      </div>
+
+      <div class="success-msg" id="fok">
+        <svg class="success-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        <h3>¡Bienvenido a la vanguardia!</h3>
+        <p>Has asegurado tu posición en el despliegue inicial. Nos comunicaremos directamente contigo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="manifesto">
+  <div class="manifesto-glow"></div>
+  <div class="container">
+    <div class="manifesto-eyebrow reveal">Manifiesto BioHabit</div>
+    <div class="manifesto-line reveal rd1"></div>
+    <blockquote class="manifesto-quote reveal rd2">
+      "Cada hábito es un voto hacia la persona en la que te estás convirtiendo."
+    </blockquote>
+    <p class="manifesto-attr reveal rd3">— BioHabit Core · Ganbaru</p>
+    <p class="manifesto-sub reveal rd4">
+      No buscamos picos de motivación efímeros. Buscamos consistencia sobria. Levantarte cuando las condiciones son desfavorables. Elegir lo complejo sobre lo cómodo. Eso es BioHabit.
+    </p>
+  </div>
+</section>
+
+<section id="final-cta">
+  <div class="cta-bg"></div>
+  <div class="container">
+    <h2 class="final-title reveal">EMPIEZA<br>HOY.</h2>
+    <p class="final-sub reveal rd1">Construye la arquitectura de tu nueva identidad.</p>
+    <div class="cta-group">
+      <button class="btn-primary reveal rd2" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Únete a la lista de espera</button>
+      <button class="btn-ghost reveal rd3" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">Explorar manifiesto →</button>
+    </div>
+    <p class="final-proof reveal rd4">Consistency over motivation.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="#" class="footer-logo">BIOHABIT</a>
+      <div class="footer-links">
+        <a href="#">Instagram</a>
+        <a href="#">TikTok</a>
+        <a href="mailto:hola@biohabit.com">hola@biohabit.com</a>
+      </div>
+      <p class="footer-right">BioHabit — Ganbaru. Haz que valga la pena.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script>
+const nav = document.getElementById('nav');
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if(!ticking){
+    requestAnimationFrame(()=>{
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+      ticking = false;
+    });
+    ticking = true;
+  }
+}, {passive:true});
+
+const revealEls = document.querySelectorAll('.reveal');
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') });
+}, {threshold:0.08, rootMargin:'0px 0px -40px 0px'});
+revealEls.forEach(el => ro.observe(el));
+
+setTimeout(()=>{
+  document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('visible'));
+}, 120);
+
+// Smooth Parallax Hero Desktop Engine
+if(window.innerWidth > 900){
+  const hl = document.querySelector('.hero-headline');
+  document.getElementById('hero').addEventListener('mousemove', e => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const dx = (e.clientX - r.left - r.width/2) / r.width;
+    const dy = (e.clientY - r.top - r.height/2) / r.height;
+    hl.style.transform = `translate(${dx*6}px,${dy*3}px)`;
+  }, {passive:true});
+  document.getElementById('hero').addEventListener('mouseleave', () => {
+    hl.style.transform = '';
+  });
+}
+
+// ── CONFIGURACIÓN DE SUPABASE ──
+const SUPABASE_URL = "https://sllqruxmxhpazaghctkx.supabase.co"; 
+const SUPABASE_ANON_KEY = "sb_publishable_dP5NgJHFj2Om9O5p570C2w_7EKs9brb";
+
+const { createClient } = window.supabase || {};
+const supabaseClient = createClient ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// Waitlist Form Management con integración a base de datos de Supabase
+async function submitForm(){
+  const n = document.getElementById('fname').value.trim();
+  const e = document.getElementById('femail').value.trim();
+  const g = document.getElementById('fgoal').value;
+  const btn = document.getElementById('fsub');
+
+  if(!n||!e||!g){
+    btn.style.outline = '1px solid rgba(200,80,80,0.4)';
+    setTimeout(()=>btn.style.outline='',1200);
+    alert('Por favor, completa todos los campos.');
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert('Error interno de inicialización. Por favor, recarga la página.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.textContent = 'Estructurando acceso...';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('waitlist')
+      .insert([{ name: n, email: e, goal: g }])
+      .select();
+
+    if (error) {
+      console.error('Supabase Database Error:', error);
+      if (error.code === '23505') {
+        alert('Este correo electrónico ya se encuentra registrado.');
+      } else {
+        alert(`Error desde Supabase (${error.code}): ${error.message}`);
+      }
+    } else {
+      document.getElementById('form-wrap').style.display = 'none';
+      document.getElementById('fok').classList.add('show');
+    }
+  } catch (err) {
+    console.error('Critical Network Error:', err);
+    alert('No se pudo establecer conexión con el servidor.');
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.textContent = 'Convertirme en Founding Athlete';
+  }
+}
+
+// ── EXPLORE BIOHABIT MODAL SYSTEM ──
+const modalData = {
+  running: {
+    eyebrow: 'Running',
+    title: 'RUNNING',
+    interest: 'running',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Rutas Guardadas</div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.25rem">
+          <div style="border:1px solid var(--border2);padding:1rem 1.1rem;cursor:pointer;transition:background 0.3s,border-color 0.3s;background:var(--bg)"
+               onmouseenter="this.style.background='var(--bg2)';this.style.borderColor='var(--green)'"
+               onmouseleave="this.style.background='var(--bg)';this.style.borderColor='var(--border2)'"
+               onclick="openRouteViewer('social-run-ovaclub')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.05em;color:var(--text)">Social Run OVACLUB × POP STRIPS</span>
+              <span style="font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);border:1px solid rgba(78,110,74,0.3);padding:0.2rem 0.5rem">Ver Mapa ↗</span>
+            </div>
+            <div style="display:flex;gap:0.75rem">
+              <span class="modal-tag">4.11 km</span>
+              <span class="modal-tag">+42m</span>
+              <span class="modal-tag accent">GDL</span>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border2);padding:1rem 1.1rem;cursor:pointer;transition:background 0.3s,border-color 0.3s;background:var(--bg)"
+               onmouseenter="this.style.background='var(--bg2)';this.style.borderColor='var(--green)'"
+               onmouseleave="this.style.background='var(--bg)';this.style.borderColor='var(--border2)'"
+               onclick="openRouteViewer('the-habit-run')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.05em;color:var(--text)">KYROS SOCIAL RUN</span>
+              <span style="font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);border:1px solid rgba(78,110,74,0.3);padding:0.2rem 0.5rem">Ver Mapa ↗</span>
+            </div>
+            <div style="display:flex;gap:0.75rem">
+              <span class="modal-tag">5.24 km</span>
+              <span class="modal-tag">+120m</span>
+              <span class="modal-tag accent">GDL</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-block">
+        <div class="modal-block-label">Próximo Evento</div>
+        <div class="modal-feature-title">THE HABIT RUN </div>
+        <div class="modal-event-row">
+          <div class="modal-event-dot"></div>
+          <div class="modal-event-text">GDL · Domingo 28 de Junio, 2026 · 7:00 AM</div>
+        </div>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('running')">RECIBIR RUTAS</button>
+    `
+  },
+  training: {
+    eyebrow: 'Training',
+    title: 'TRAINING',
+    interest: 'training',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Programa Destacado</div>
+        <div class="modal-feature-title">Hybrid Starter</div>
+        <div class="modal-tags">
+          <span class="modal-tag">3 días / semana</span>
+          <span class="modal-tag accent">Fuerza + Resistencia</span>
+        </div>
+        <p class="modal-desc">Entrena fuerza e hipertrofia sin sacrificar tu capacidad aeróbica. El punto de entrada al atleta híbrido.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('training')">RECIBIR RUTINA</button>
+    `
+  },
+  nutrition: {
+    eyebrow: 'Nutrition',
+    title: 'NUTRITION',
+    interest: 'nutrition',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Receta del Día</div>
+        <div class="modal-feature-title">Chicken Rice Bowl</div>
+        <div class="modal-tags">
+          <span class="modal-tag accent">35g Proteína</span>
+          <span class="modal-tag">Alta Saciedad</span>
+          <span class="modal-tag">Prep Fácil</span>
+        </div>
+        <p class="modal-desc">Comida base para atletas: arroz jazmín, pechuga a la plancha, aguacate y salsa de soya. Macro-balanceada para peri-entreno.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('nutrition')">RECIBIR RECETAS</button>
+    `
+  },
+  recovery: {
+    eyebrow: 'Recovery',
+    title: 'RECOVERY',
+    interest: 'recovery',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Protocolo Destacado</div>
+        <div class="modal-feature-title">Runner Mobility</div>
+        <div class="modal-tags">
+          <span class="modal-tag accent">5 minutos</span>
+          <span class="modal-tag">Post-carrera</span>
+        </div>
+        <p class="modal-desc">Mejora tu recuperación y reduce la rigidez muscular. Secuencia diseñada para caderas, isquiotibiales y pantorrillas.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('recovery')">RECIBIR GUÍA</button>
+    `
+  },
+  habits: {
+    eyebrow: 'Habits',
+    title: 'HABITS',
+    interest: 'habits',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Sistema</div>
+        <div class="modal-feature-title">Ganbaru System</div>
+        <div class="modal-list">
+          <div class="modal-list-item">Hidratación diaria consistente</div>
+          <div class="modal-list-item">Higiene del sueño (7–9h)</div>
+          <div class="modal-list-item">Movilidad matutina</div>
+          <div class="modal-list-item">Sesión de entrenamiento semanal</div>
+        </div>
+        <p class="modal-desc" style="margin-top:1rem">Cuatro pilares no negociables. El mínimo viable para un atleta funcional.</p>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('habits')">RECIBIR HÁBITOS</button>
+    `
+  },
+  'community-modal': {
+    eyebrow: 'Community',
+    title: 'COMMUNITY',
+    interest: 'community',
+    html: `
+      <div class="modal-block">
+        <div class="modal-block-label">Iniciativa</div>
+        <div class="modal-feature-title">BioHabit Social Runs</div>
+        <div class="modal-list">
+          <div class="modal-list-item">Eventos presenciales en Guadalajara</div>
+          <div class="modal-list-item">Retos de consistencia en comunidad</div>
+          <div class="modal-list-item">Red de atletas que eligen el camino difícil</div>
+        </div>
+      </div>
+      <button class="modal-cta green-cta" onclick="exploreScrollToWaitlist('community')">UNIRME</button>
+    `
+  }
+};
+
+let currentInterest = '';
+
+function openExploreModal(key) {
+  const data = modalData[key];
+  if (!data) return;
+  currentInterest = data.interest;
+  document.getElementById('modalEyebrow').textContent = data.eyebrow;
+  document.getElementById('modalTitle').textContent = data.title;
+  document.getElementById('modalBody').innerHTML = data.html;
+  const overlay = document.getElementById('exploreOverlay');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeExploreModal() {
+  document.getElementById('exploreOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.querySelectorAll('.explore-row').forEach(r => r.classList.remove('active'));
+  currentInterest = '';
+}
+
+function exploreScrollToWaitlist(interest) {
+  currentInterest = interest;
+  closeExploreModal();
+  setTimeout(() => {
+    document.getElementById('waitlist').scrollIntoView({behavior:'smooth'});
+    // Store interest as data attribute on hidden field (no schema change needed)
+    const form = document.getElementById('form-wrap');
+    if (form) form.dataset.interest = interest;
+  }, 320);
+}
+
+document.querySelectorAll('.explore-row').forEach(row => {
+  row.addEventListener('click', () => {
+    const key = row.dataset.modal;
+    document.querySelectorAll('.explore-row').forEach(r => r.classList.remove('active'));
+    row.classList.add('active');
+    openExploreModal(key);
+  });
+});
+
+document.getElementById('modalClose').addEventListener('click', closeExploreModal);
+
+document.getElementById('exploreOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeExploreModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeExploreModal();
+});
+
+
+// ── ROUTE VIEWER SYSTEM ──
+// ─────────────────────────────────────────────────────────────────────────────
+// GESTIÓN DE RUTAS — Objeto global centralizado.
+// Para añadir rutas: agrega una nueva entrada con la misma estructura.
+// Si en el futuro cargas desde un JSON externo:
+//   fetch('/routes.json').then(r=>r.json()).then(data => Object.assign(BIOHABIT_ROUTES, data))
+// ─────────────────────────────────────────────────────────────────────────────
+const BIOHABIT_ROUTES = {
+  'social-run-ovaclub': {
+    title:     'Social Run OVACLUB × POP STRIPS',
+    distance:  '4.61',
+    elevation: '42',
+    date:      'Sábado 21 de Junio, 2025 · 7:00 AM',
+    location:  'Guadalajara, Jalisco',
+    level:     'Intermedio',
+    points: [{"lat":20.70932506243673,"lng":-103.40894222259523},{"lat":20.708221141503728,"lng":-103.41071248054506},{"lat":20.707709320888448,"lng":-103.41178536415102},{"lat":20.70581255883197,"lng":-103.41349124908449},{"lat":20.706424743888718,"lng":-103.41478943824768},{"lat":20.707583874395493,"lng":-103.41619491577148},{"lat":20.708783138619825,"lng":-103.41767549514772},{"lat":20.70884335247295,"lng":-103.41871082782747},{"lat":20.70858744343195,"lng":-103.42090487480165},{"lat":20.708512175984726,"lng":-103.42363536357881},{"lat":20.708652675189327,"lng":-103.42450439929964},{"lat":20.70836665881409,"lng":-103.42498183250429},{"lat":20.708196052298167,"lng":-103.42514276504518},{"lat":20.708236195025066,"lng":-103.42599570751192},{"lat":20.70826630206327,"lng":-103.4262639284134},{"lat":20.708075624053663,"lng":-103.42632830142976},{"lat":20.708090677589468,"lng":-103.42528223991394},{"lat":20.70825626638454,"lng":-103.42491745948792},{"lat":20.70849712249079,"lng":-103.42467606067659},{"lat":20.708456979832995,"lng":-103.42376410961153},{"lat":20.708411819330273,"lng":-103.42287361621858},{"lat":20.708547300798084,"lng":-103.42020750045778},{"lat":20.708808227728202,"lng":-103.4182870388031},{"lat":20.708642639536173,"lng":-103.41762185096742},{"lat":20.70743835633359,"lng":-103.41617345809937},{"lat":20.70641470808806,"lng":-103.41508448123933},{"lat":20.706028329257066,"lng":-103.41455340385438},{"lat":20.705682092844548,"lng":-103.4139794111252},{"lat":20.705451268130147,"lng":-103.41366291046144},{"lat":20.705566680531284,"lng":-103.41323912143707},{"lat":20.705792487148905,"lng":-103.41306746006013},{"lat":20.706826175370622,"lng":-103.41238081455232},{"lat":20.707192480670155,"lng":-103.41191947460176},{"lat":20.707709320888448,"lng":-103.41106653213502},{"lat":20.7082060879809,"lng":-103.41020286083223},{"lat":20.708838334652768,"lng":-103.40914607048036},{"lat":20.709154456999663,"lng":-103.40840041637422},{"lat":20.709395311678517,"lng":-103.40781569480896},{"lat":20.70948061428549,"lng":-103.40728461742401},{"lat":20.709696379488815,"lng":-103.40725779533388},{"lat":20.709806770869402,"lng":-103.40741336345674},{"lat":20.70974655739905,"lng":-103.40768694877626},{"lat":20.70934011584843,"lng":-103.40882420539856}]
+  },
+  'the-habit-run': {
+    title:     'KYROS SOCIAL RUN',
+    distance:  '6.73',
+    elevation: '120',
+    date:      'Domingo 10 de Mayo, 2026 · 7:00 AM',
+    location:  'Guadalajara, Jalisco',
+    level:     'Intermedio',
+    points: [{"lat":20.69069782914247,"lng":-103.38170170783998},{"lat":20.691801877659415,"lng":-103.38851451873781},{"lat":20.692072870158107,"lng":-103.3917009830475},{"lat":20.69486807934667,"lng":-103.39259684085846},{"lat":20.692976174990644,"lng":-103.3952522277832},{"lat":20.692133090647612,"lng":-103.39662551879883},{"lat":20.69165132606207,"lng":-103.39913606643678},{"lat":20.691530884676606,"lng":-103.40100288391115},{"lat":20.69070786598336,"lng":-103.40271949768068},{"lat":20.690045433060213,"lng":-103.40411424636842},{"lat":20.690286318094216,"lng":-103.40417861938478},{"lat":20.69046698161871,"lng":-103.40378701686859},{"lat":20.69158608699014,"lng":-103.40149641036987},{"lat":20.691877153402046,"lng":-103.40096533298494},{"lat":20.6919775210008,"lng":-103.39918971061708},{"lat":20.692233458077034,"lng":-103.3976447582245},{"lat":20.692574706840276,"lng":-103.39623391628267},{"lat":20.69388449275919,"lng":-103.3948177099228},{"lat":20.69403002382979,"lng":-103.3947265148163},{"lat":20.695425107697268,"lng":-103.39583158493043},{"lat":20.69560576510136,"lng":-103.39576721191408},{"lat":20.695696093722702,"lng":-103.39528441429138},{"lat":20.69612766305993,"lng":-103.39342832565309},{"lat":20.696699741451198,"lng":-103.39103579521179},{"lat":20.69686534268803,"lng":-103.39052617549896},{"lat":20.696453848372013,"lng":-103.39026868343355},{"lat":20.696157772502744,"lng":-103.38994681835176},{"lat":20.696022279963,"lng":-103.38962495326997},{"lat":20.697271817684484,"lng":-103.38876128196718},{"lat":20.69774854623037,"lng":-103.38638484477997},{"lat":20.69715138076208,"lng":-103.38643312454225},{"lat":20.6963384290341,"lng":-103.38637948036195},{"lat":20.69521434045384,"lng":-103.38639020919801},{"lat":20.6934830270129,"lng":-103.38644385337831},{"lat":20.6934278253897,"lng":-103.38620245456697},{"lat":20.693307385414776,"lng":-103.38555335998537},{"lat":20.693242147055088,"lng":-103.38508129119874},{"lat":20.693056468493193,"lng":-103.38434636592866},{"lat":20.69242415600994,"lng":-103.38251709938051},{"lat":20.691671399617004,"lng":-103.38267803192139},{"lat":20.690998934080323,"lng":-103.382785320282},{"lat":20.690808234355735,"lng":-103.38174462318422}]}
+};
+
+let leafletMap = null;
+let routeLayer = null;
+
+// importSharedRoute ya no usa Base64 — recibe la clave del objeto global.
+function importSharedRoute(routeKey) {
+  const route = BIOHABIT_ROUTES[routeKey];
+  if (!route) { console.error('Ruta no encontrada:', routeKey); return null; }
+  return route;
+}
+
+function initMap() {
+  if (leafletMap) return;
+  leafletMap = L.map('map', {
+    zoomControl: false,
+    attributionControl: false,
+    scrollWheelZoom: true
+  });
+
+  // Dark minimal tile layer matching BioHabit aesthetic
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    subdomains: 'abcd'
+  }).addTo(leafletMap);
+
+  // Attribution minimal
+  L.control.attribution({prefix: false, position:'bottomright'})
+    .addAttribution('© <a href="https://carto.com/" target="_blank">CARTO</a>')
+    .addTo(leafletMap);
+
+  L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
+}
+
+// openRouteViewer(routeKey) — recibe la clave del objeto BIOHABIT_ROUTES.
+// Ya no usa Base64. El título, distancia, fecha, etc. vienen del objeto.
+function openRouteViewer(routeKey) {
+  const route = importSharedRoute(routeKey);
+  if (!route || !route.points || route.points.length < 2) return;
+
+  // Cerrar modal de explore si está abierto
+  closeExploreModal();
+
+  const modal = document.getElementById('routeModal');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Inicializar mapa en la primera apertura
+  initMap();
+
+  // Remover capa de ruta anterior
+  if (routeLayer) {
+    routeLayer.forEach(l => leafletMap.removeLayer(l));
+    routeLayer = null;
+  }
+
+  const latlngs = route.points.map(p => [p.lat, p.lng]);
+
+  // Polyline de la ruta
+  const line = L.polyline(latlngs, {
+    color: '#26442F',
+    weight: 4.5,
+    opacity: 0.95,
+    lineJoin: 'round',
+    lineCap: 'round'
+  }).addTo(leafletMap);
+
+  // Pin de inicio
+  const startIcon = L.divIcon({
+    className: '',
+    html: '<div class="route-start-pin"></div>',
+    iconSize: [10, 10],
+    iconAnchor: [5, 5]
+  });
+  const startMarker = L.marker(latlngs[0], { icon: startIcon }).addTo(leafletMap);
+
+  // Pin de fin
+  const endIcon = L.divIcon({
+    className: '',
+    html: '<div class="route-end-pin"></div>',
+    iconSize: [10, 10],
+    iconAnchor: [5, 5]
+  });
+  const endMarker = L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(leafletMap);
+
+  routeLayer = [line, startMarker, endMarker];
+
+  // fitBounds garantizado: primero invalidateSize, luego fit dentro del callback
+  const bounds = line.getBounds();
+  leafletMap.invalidateSize();
+  leafletMap.fitBounds(bounds, { padding: [56, 56], animate: false });
+
+  // Segundo pass para asegurar render correcto tras la transición CSS del modal
+  setTimeout(() => {
+    leafletMap.invalidateSize();
+    leafletMap.fitBounds(bounds, { padding: [56, 56] });
+  }, 350);
+
+  // — Info card —
+  document.getElementById('routeCardTitle').textContent = route.title;
+
+  document.getElementById('routeCardStats').innerHTML = `
+    <div class="route-stat"><span class="val">${route.distance} km</span><span class="lbl">Distancia</span></div>
+    <div class="route-stat"><span class="val">+${route.elevation} m</span><span class="lbl">Desnivel</span></div>
+    <div class="route-stat"><span class="val">${route.level || '—'}</span><span class="lbl">Nivel</span></div>
+  `;
+
+  const dateEl = document.getElementById('routeCardDate');
+  if (route.date) {
+    dateEl.innerHTML = `<div class="route-date-dot"></div><span>${route.date} · ${route.location || ''}</span>`;
+    dateEl.style.display = 'flex';
+  } else {
+    dateEl.style.display = 'none';
+  }
+}
+
+function closeRouteViewer() {
+  document.getElementById('routeModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function routeScrollToWaitlist() {
+  closeRouteViewer();
+  setTimeout(() => {
+    document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+    const form = document.getElementById('form-wrap');
+    if (form) form.dataset.interest = 'running';
+  }, 200);
+}
+
+// Close route modal on overlay click — attached after DOM ready (see DOMContentLoaded below)
+
+// Close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeRouteViewer();
+    closeExploreModal();
+  }
+});
+
+// Attach routeModal overlay click once DOM is fully parsed
+document.addEventListener('DOMContentLoaded', () => {
+  const routeModal = document.getElementById('routeModal');
+  if (routeModal) {
+    routeModal.addEventListener('click', function(e) {
+      if (e.target === this) closeRouteViewer();
+    });
+  }
+});
+</script>
+
+<!-- ── ROUTE VIEWER MODAL ── -->
+<div id="routeModal">
+  <div class="route-modal-inner">
+    <div id="map"></div>
+    <div class="route-info-card" id="routeInfoCard">
+      <div class="route-info-eyebrow">BioHabit Running</div>
+      <div class="route-info-title" id="routeCardTitle">—</div>
+      <div class="route-stats" id="routeCardStats"></div>
+      <div class="route-date-row" id="routeCardDate"></div>
+      <button class="route-cta-btn" onclick="routeScrollToWaitlist()">RECIBIR RUTAS</button>
+    </div>
+    <button class="route-modal-close" onclick="closeRouteViewer()" aria-label="Cerrar mapa">
+      <svg viewBox="0 0 14 14"><path d="M1 1l12 12M13 1L1 13"/></svg>
+    </button>
+  </div>
+</div>
+
+</body>
+</html>
