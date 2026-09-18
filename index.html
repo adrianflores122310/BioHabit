@@ -1484,7 +1484,7 @@ function BHOnboardingGate(){
  }
  function BeNav(Ze){
   se(Ke=>{
-   if(Ke.includes(Ze))return Ke.length<=3?Ke:Ke.filter(et=>et!==Ze);
+   if(Ke.includes(Ze))return Ke.filter(et=>et!==Ze);
    if(Ke.length>=3)return Ke;
    return[...Ke,Ze]
   })
@@ -1533,7 +1533,11 @@ function BHOnboardingGate(){
   if(result.error){
    result=await Be.from("user_preferences").upsert(base,{onConflict:"user_id"})
   }
-  if(result.error){V(result.error.message);ee(!1);return}
+  if(result.error){
+   const msg=String(result.error.message||"");
+   V(msg.includes("user_preferences_user_id_fkey")?"Tu perfil todavía no terminó de crearse. Cierra sesión, vuelve a entrar e inténtalo otra vez.":msg);
+   ee(!1);return
+  }
 
   bhWritePrimaryNav(t,F);
   try{localStorage.removeItem("biohabit_oauth_onboarding_pending")}catch{}
@@ -1633,7 +1637,7 @@ function BHOnboardingGate(){
    f.jsx("h1",{className:"font-display",children:"ELIGE TUS 3 MÓDULOS."}),
    f.jsx("p",{children:"Inicio y YO siempre estarán ahí. Elige los tres accesos que quieres tener más cerca."}),
    f.jsx("div",{className:"bh-onboarding-modules-v28",children:modules.map(Ze=>f.jsxs("button",{onClick:()=>BeNav(Ze[0]),className:F.includes(Ze[0])?"active":"",children:[f.jsx(BHNavIcon,{type:Ze[2]}),f.jsx("span",{children:Ze[1]}),f.jsx("b",{children:F.includes(Ze[0])?"✓":"+"})]},Ze[0]))}),
-   f.jsx("small",{className:"bh-onboarding-note-v28",children:`${F.length}/3 seleccionados`}),
+   f.jsx("small",{className:"bh-onboarding-note-v28",children:F.length===3?"3/3 seleccionados · Toca uno para cambiarlo.":`${F.length}/3 seleccionados · Elige exactamente tres.`}),
    Oe&&f.jsxs("div",{className:"bh-onboarding-email-v28",children:[
     f.jsx("strong",{children:"CORREOS BIOHABIT · ACTIVADOS"}),
     f.jsx("span",{children:"Recibirás rutinas, eventos, nutrición y novedades. Podrás cambiarlo después desde YO."})
