@@ -1538,6 +1538,16 @@ function BHOnboardingGate(){
   bhWritePrimaryNav(t,F);
   try{localStorage.removeItem("biohabit_oauth_onboarding_pending")}catch{}
   try{await Be.auth.updateUser({data:{biohabit_onboarding_required:!1}})}catch{}
+
+  // Correo transaccional de bienvenida. No depende de newsletter_opt_in.
+  // La Edge Function evita duplicados mediante welcome_email_sent_at.
+  try{
+   const{error:welcomeError}=await Be.functions.invoke("biohabit-welcome",{body:{source:"onboarding_complete"}});
+   if(welcomeError)console.warn("BioHabit welcome email:",welcomeError.message||welcomeError)
+  }catch(welcomeError){
+   console.warn("BioHabit welcome email:",welcomeError)
+  }
+
   ee(!1);ue(!0)
  }
 
@@ -1546,7 +1556,7 @@ function BHOnboardingGate(){
  if(ae)return f.jsx("div",{className:"bh-onboarding-shell-v28",children:f.jsxs("div",{className:"bh-onboarding-welcome-v28",children:[
   f.jsx("span",{className:"bh-onboarding-eyebrow-v28",children:"BIOHABIT"}),
   f.jsx("h1",{className:"font-display",children:"YA CONOCEMOS TU PUNTO DE PARTIDA."}),
-  f.jsx("p",{children:"Objetivo, movimiento, semana y nutrición ya están conectados. Esto puede cambiar contigo."}),
+  f.jsx("p",{children:"Objetivo, movimiento, semana y nutrición ya están conectados. Te damos la bienvenida también en tu correo. Esto puede cambiar contigo."}),
   f.jsx("div",{className:"bh-onboarding-rule-v28"}),
   f.jsx("strong",{children:"HAZ QUE VALGA LA PENA."}),
   f.jsx("button",{onClick:()=>{l(!1);window.location.hash="/app"},children:"ENTRAR A BIOHABIT →"})
