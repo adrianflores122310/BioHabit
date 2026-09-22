@@ -997,7 +997,8 @@ function ED(){
         `${row.portions??1} porción${Number(row.portions??1)===1?"":"es"}`,
         recipe?.kcal?` · ${Math.round(Number(recipe.kcal)*(Number(row.portions)||1))} kcal`:"",
         recipe?.protein_g?` · ${Math.round(Number(recipe.protein_g)*(Number(row.portions)||1))} g proteína`:""
-       ]})      ]})
+       ]})
+      ]})
      ]}),
      f.jsxs("div",{className:"bh-slot-details-v274",children:[
       f.jsxs("div",{children:[
@@ -1996,7 +1997,8 @@ function bhDemoHabitState(t){
    e.habits=e.habits.map(bhNormalizeHabit);
    e.entries=e.entries||{};
    return e
-  } }catch{}
+  }
+ }catch{}
  const e=bhDemoHabits(),i={},a={};
  bhWeekDates().forEach((l,d)=>{
   e.forEach((h,g)=>{
@@ -2995,7 +2997,8 @@ html{scroll-behavior:smooth}body{overscroll-behavior-y:auto;-webkit-overflow-scr
 </style>
 
 
-<style id="biohabit-v2-2-interaction-repair">html,body,#root{min-height:100%;width:100%}
+<style id="biohabit-v2-2-interaction-repair">
+html,body,#root{min-height:100%;width:100%}
 html,body{overflow-x:hidden}
 body:not(:has([role="dialog"][aria-modal="true"])){overflow-y:auto!important;position:static!important;height:auto!important}
 #root{overflow:visible!important;touch-action:pan-y pinch-zoom}
@@ -3994,9 +3997,164 @@ button,a,input,select,textarea{touch-action:manipulation}
 </script>
 
 
-<style id="bh-v219-gender">.bh-onboarding-gender-v219{margin:12px 0 20px}.bh-onboarding-gender-v219 button{min-width:0}
+<style id="bh-v219-gender">
+.bh-onboarding-gender-v219{margin:12px 0 20px}.bh-onboarding-gender-v219 button{min-width:0}
 @media(max-width:640px){.bh-onboarding-gender-v219{display:grid!important;grid-template-columns:1fr!important}.bh-onboarding-gender-v219 button{width:100%}}
 </style>
+<style id="bh-v220-endurance">
+:root{--bh-endurance-green:#4E6E4A;--bh-endurance-green2:#26442F;--bh-endurance-bg:#F9F9F7;--bh-endurance-soft:#F1F1EE;--bh-endurance-border:#DFDFDA;--bh-endurance-text:#0A0A0A;--bh-endurance-muted:#777770}
+.bh-endurance-launch{width:100%;margin:14px 0 4px;padding:13px 16px;border:1px solid var(--green,#4E6E4A);background:transparent;color:var(--green,#4E6E4A);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;transition:.2s ease}
+.bh-endurance-launch:hover{background:var(--green,#4E6E4A);color:var(--bg,#F9F9F7)}
+.bh-endurance-overlay{position:fixed;inset:0;z-index:1400;background:rgba(10,10,10,.72);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:18px}
+.bh-endurance-shell{width:min(100%,500px);max-height:min(92svh,860px);overflow:auto;background:var(--bh-endurance-bg);color:var(--bh-endurance-text);border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 90px rgba(0,0,0,.38);position:relative}
+.bh-endurance-top{position:sticky;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--bh-endurance-border);background:rgba(249,249,247,.95);backdrop-filter:blur(12px)}
+.bh-endurance-top button{border:0;background:transparent;color:var(--bh-endurance-text);font-size:1.1rem;cursor:pointer}.bh-endurance-top .bh-e-title{font-size:.67rem;letter-spacing:.16em;text-transform:uppercase;color:var(--bh-endurance-muted);font-weight:700}.bh-endurance-top .bh-e-live{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bh-endurance-green)}
+.bh-e-hero{aspect-ratio:16/9;position:relative;overflow:hidden;background:linear-gradient(145deg,#e7e8e3,#d7ddd4)}.bh-e-hero img{width:100%;height:100%;object-fit:cover}.bh-e-hero:after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.5))}.bh-e-hero-copy{position:absolute;z-index:2;left:20px;right:20px;bottom:18px;color:white}.bh-e-hero-copy small{display:block;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;opacity:.8;margin-bottom:6px}.bh-e-hero-copy strong{font-family:inherit;font-size:1.55rem;line-height:1.05;display:block}
+.bh-e-body{padding:20px}.bh-e-kicker{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bh-endurance-green);font-weight:700;margin-bottom:7px}.bh-e-h1{font-size:2rem;line-height:.98;margin:0 0 8px;font-weight:800}.bh-e-sub{font-size:.83rem;color:var(--bh-endurance-muted);line-height:1.55;margin:0}
+.bh-e-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.bh-e-mode button{padding:12px;border:1px solid var(--bh-endurance-border);background:transparent;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bh-endurance-muted)}.bh-e-mode button.active{background:var(--bh-endurance-text);color:var(--bh-endurance-bg);border-color:var(--bh-endurance-text)}
+.bh-e-summary{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--bh-endurance-border);margin:16px 0 20px}.bh-e-summary div{padding:13px 10px;text-align:center;border-right:1px solid var(--bh-endurance-border)}.bh-e-summary div:last-child{border-right:0}.bh-e-summary strong{display:block;font-size:1.05rem}.bh-e-summary span{display:block;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bh-endurance-muted);margin-top:4px}
+.bh-e-plan{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.bh-e-card{padding:14px;border:1px solid var(--bh-endurance-border);background:var(--bh-endurance-soft);position:relative;overflow:hidden}.bh-e-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--seg,#4E6E4A)}.bh-e-card small{display:block;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bh-endurance-muted)}.bh-e-card strong{font-size:.92rem;display:block;margin:4px 0}.bh-e-card span{font-size:.7rem;color:var(--bh-endurance-muted)}
+.bh-e-primary{width:100%;border:0;background:var(--bh-endurance-green);color:white;padding:15px 18px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;cursor:pointer}.bh-e-primary:hover{background:var(--bh-endurance-green2)}
+.bh-e-session{padding:18px 20px 24px;text-align:center}.bh-e-session .seg-name{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bh-endurance-muted)}.bh-e-session .state{font-size:.6rem;color:var(--bh-endurance-green);margin:7px 0 10px}.bh-e-value{font-size:4rem;line-height:.9;font-weight:700;letter-spacing:-.055em;margin:10px 0 6px}.bh-e-value small{font-size:1rem;letter-spacing:0;font-weight:500}.bh-e-objective{font-size:.72rem;color:var(--bh-endurance-muted);margin-bottom:16px}
+.bh-e-progress{height:8px;border-radius:99px;background:#e4e4e0;overflow:hidden;margin:14px 0 18px}.bh-e-progress span{height:100%;display:block;border-radius:inherit;background:#58d98b;transition:width .4s linear}
+.bh-e-adjust-label{font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--bh-endurance-muted);margin-bottom:8px}.bh-e-adjust{display:flex;align-items:center;justify-content:center;gap:15px;margin-bottom:16px}.bh-e-adjust button{width:34px;height:34px;border:0;border-radius:50%;font-size:1.35rem;background:#e8e8e5;color:#444;cursor:pointer}.bh-e-adjust strong{min-width:115px;font-size:1rem;font-weight:700}
+.bh-e-zone{height:7px;border-radius:99px;background:linear-gradient(90deg,#31b8ff 0%,#38d6d0 24%,#58d98b 45%,#f7d53d 68%,#ff9d25 84%,#e8372c 100%);position:relative;margin:11px 10px 10px}.bh-e-zone i{position:absolute;width:12px;height:12px;border-radius:50%;background:white;border:1px solid #888;top:50%;transform:translate(-50%,-50%);left:var(--zone-pos,45%)}
+.bh-e-timerbox{background:var(--bh-endurance-soft);padding:12px;margin:12px 0 15px}.bh-e-timerbox strong{font-size:.95rem}.bh-e-timerbox span{display:block;font-size:.62rem;color:var(--bh-endurance-muted);margin-top:3px}
+.bh-e-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.bh-e-actions button{padding:13px 10px;font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;border:1px solid var(--bh-endurance-border);background:transparent;cursor:pointer}.bh-e-actions .next{background:var(--bh-endurance-green);border-color:var(--bh-endurance-green);color:white}
+.bh-e-drawer{margin-top:18px;text-align:left;border-top:1px solid var(--bh-endurance-border);padding-top:14px}.bh-e-drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.bh-e-drawer-head span{font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;color:var(--bh-endurance-muted)}.bh-e-drawer button{width:100%;border:0;border-bottom:1px solid var(--bh-endurance-border);background:transparent;padding:11px 8px;text-align:left;display:grid;grid-template-columns:1fr auto;gap:10px;color:var(--bh-endurance-muted)}.bh-e-drawer button.current{color:#38c86f;font-weight:700}.bh-e-drawer button.done{color:#a0a09a}.bh-e-drawer b{font-size:.75rem}.bh-e-drawer em{font-size:.7rem;font-style:normal}.bh-e-drawer small{display:block;font-size:.58rem;font-weight:400;margin-top:2px}
+.bh-e-finish{padding:42px 24px;text-align:center}.bh-e-finish .mark{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;background:var(--bh-endurance-green);color:white;font-size:1.4rem}.bh-e-finish h3{font-size:2rem;line-height:1;margin:0 0 10px}.bh-e-finish p{font-size:.82rem;color:var(--bh-endurance-muted);margin:0 auto 22px;max-width:320px}
+@media(max-width:640px){.bh-endurance-overlay{padding:0;align-items:stretch}.bh-endurance-shell{width:100%;max-height:100svh;height:100svh;border:0}.bh-e-plan{grid-template-columns:1fr 1fr}.bh-e-value{font-size:3.6rem}.bh-e-body{padding:18px}.bh-e-hero{aspect-ratio:16/9}}
+</style>
+<script id="bh-v220-endurance-script">
+(function(){
+  const STORAGE_KEY='bh_endurance_session_v220';
+  const green='#4E6E4A';
+  const qs=(s,r=document)=>r.querySelector(s);
+  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const norm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const isRunning=n=>/(carrera|running|correr|trote|tempo|fartlek|interval|series)/i.test(norm(n));
+  const isBike=n=>/(bici|bike|cycling|ciclismo|rodillo|spinning)/i.test(norm(n));
+  const isEndurance=n=>isRunning(n)||isBike(n)||/(caminata inclinada)/i.test(norm(n));
+  const isMixed=n=>/(caminata inclinada.*bici|bici.*caminata inclinada)/i.test(norm(n));
+  const fmtPace=sec=>{sec=Math.max(180,Math.min(720,Math.round(sec)));return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')};
+  const fmtClock=sec=>{sec=Math.max(0,Math.round(sec));return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')};
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const getMode=name=>isBike(name)&&!isRunning(name)?'bike':'run';
+  const configs={
+    run:[
+      {name:'Calentamiento',min:10,pace:390,rpe:'RPE 3–4',color:'#3bb8e8'},
+      {name:'Easy',min:20,pace:360,rpe:'RPE 4–5',color:'#f1d93b'},
+      {name:'Tempo',min:10,pace:300,rpe:'RPE 7–8',color:'#ed4a3a'},
+      {name:'Recuperación',min:2,pace:420,rpe:'RPE 2–3',color:'#55c47a'}
+    ],
+    bike:[
+      {name:'Calentamiento',min:10,speed:18,rpe:'RPE 3–4',color:'#3bb8e8'},
+      {name:'Easy',min:20,speed:23,rpe:'RPE 4–5',color:'#f1d93b'},
+      {name:'Tempo',min:10,speed:29,rpe:'RPE 7–8',color:'#ed4a3a'},
+      {name:'Recuperación',min:3,speed:17,rpe:'RPE 2–3',color:'#55c47a'}
+    ]
+  };
+  function copyPlan(mode){return configs[mode].map(x=>({...x}))}
+  function totalMin(plan){return plan.reduce((a,x)=>a+x.min,0)}
+  function targetText(seg,mode){
+    if(mode==='run') return fmtPace(seg.pace)+' /km';
+    return Number(seg.speed).toFixed(1)+' km/h';
+  }
+  function objectiveText(seg,mode){
+    if(mode==='run') return fmtPace(seg.pace-15)+' – '+fmtPace(seg.pace+15)+'/km';
+    return (seg.speed-1.5).toFixed(1)+' – '+(seg.speed+1.5).toFixed(1)+' km/h';
+  }
+  function heroFromPanel(panel){const img=qs('img',panel);return img?img.src:''}
+  function makeOverlay(name,hero,forcedMode){
+    document.getElementById('bh-endurance-overlay')?.remove();
+    const mixed=isMixed(name);
+    let mode=forcedMode||getMode(name);
+    let plan=copyPlan(mode),index=0,remaining=plan[0].min*60,running=false,timer=null,started=false,finished=false;
+    const ov=document.createElement('div');ov.id='bh-endurance-overlay';ov.className='bh-endurance-overlay';
+    const shell=document.createElement('div');shell.className='bh-endurance-shell';ov.appendChild(shell);document.body.appendChild(ov);document.body.style.overflow='hidden';
+    const close=()=>{clearInterval(timer);document.body.style.overflow='';ov.remove()};
+    ov.addEventListener('click',e=>{if(e.target===ov)close()});
+    document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){document.removeEventListener('keydown',esc);close()}},{once:false});
+    function modeLabel(){return mode==='run'?'RUNNING':'BIKE'}
+    function renderPreview(){
+      plan=copyPlan(mode);index=0;remaining=plan[0].min*60;started=false;running=false;clearInterval(timer);
+      shell.innerHTML=`
+        <div class="bh-endurance-top"><button data-close aria-label="Cerrar">←</button><div class="bh-e-title">ENTRENAMIENTO ${modeLabel()}</div><div class="bh-e-live">MANUAL · SIN SENSOR</div></div>
+        ${hero?`<div class="bh-e-hero"><img src="${hero}" alt="${name.replace(/"/g,'')}"><div class="bh-e-hero-copy"><small>BioHabit · Endurance</small><strong>${name}</strong></div></div>`:''}
+        <div class="bh-e-body"><div class="bh-e-kicker">SESIÓN GUIADA</div><h2 class="bh-e-h1">${name}</h2><p class="bh-e-sub">Usa BioHabit como guía de ritmo. Tú ajustas el paso o la velocidad manualmente; no necesitamos Garmin, strap ni sensor para ejecutar la sesión.</p>
+        ${mixed?`<div class="bh-e-mode"><button data-mode="run" class="${mode==='run'?'active':''}">CAMINADORA / RUN</button><button data-mode="bike" class="${mode==='bike'?'active':''}">BICI</button></div>`:''}
+        <div class="bh-e-summary"><div><strong>${totalMin(plan)} min</strong><span>Duración</span></div><div><strong>${plan.length}</strong><span>Bloques</span></div><div><strong>${mode==='run'?'Ritmo':'Velocidad'}</strong><span>Ajustable</span></div></div>
+        <div class="bh-e-plan">${plan.map((s,i)=>`<div class="bh-e-card" style="--seg:${s.color}"><small>0${i+1}</small><strong>${s.name}</strong><span>${s.min} min · ${targetText(s,mode)}</span></div>`).join('')}</div>
+        <button class="bh-e-primary" data-start>EMPEZAR ENTRENAMIENTO</button></div>`;
+      qs('[data-close]',shell).onclick=close;
+      qsa('[data-mode]',shell).forEach(b=>b.onclick=()=>{mode=b.dataset.mode;renderPreview()});
+      qs('[data-start]',shell).onclick=()=>{started=true;remaining=plan[0].min*60;renderSession();startTimer()};
+    }
+    function startTimer(){
+      clearInterval(timer);
+      running=true;
+      timer=setInterval(()=>{
+        if(!running||finished)return;
+        remaining--;
+        if(remaining<=0){
+          if(index<plan.length-1){
+            index++;
+            remaining=plan[index].min*60;
+          }else{
+            finished=true;
+            running=false;
+            clearInterval(timer);
+          }
+        }
+        renderSession();
+      },1000);
+    }
+    function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({name,mode,index,remaining,plan,started,finished,ts:Date.now()}))}catch{}}
+    function renderSession(){
+      if(finished){saveState();shell.innerHTML=`<div class="bh-endurance-top"><button data-close>←</button><div class="bh-e-title">SESIÓN COMPLETA</div><div></div></div><div class="bh-e-finish"><div class="mark">✓</div><h3>HECHO.</h3><p>Terminaste ${name}. El objetivo era sostener la sesión, no perseguir un número perfecto.</p><button class="bh-e-primary" data-done>CERRAR SESIÓN</button></div>`;qs('[data-close]',shell).onclick=close;qs('[data-done]',shell).onclick=close;return}
+      const seg=plan[index],elapsed=seg.min*60-remaining,pct=clamp(elapsed/(seg.min*60)*100,0,100);
+      const pos=mode==='run'?clamp(80-(seg.pace-270)/4,10,90):clamp((seg.speed-12)*4,10,90);
+      shell.innerHTML=`
+        <div class="bh-endurance-top"><button data-back aria-label="Volver">←</button><div class="bh-e-title">${modeLabel()} · ${seg.name}</div><button data-pause aria-label="Pausa">${running?'Ⅱ':'▶'}</button></div>
+        <div class="bh-e-session"><div class="seg-name">${seg.name.toUpperCase()}</div><div class="state">${running?'EN CURSO':'PAUSA'} · BLOQUE ${index+1}/${plan.length}</div>
+        <div class="bh-e-value">${mode==='run'?fmtPace(seg.pace):Number(seg.speed).toFixed(1)}<small>${mode==='run'?'/km':' km/h'}</small></div>
+        <div class="bh-e-objective">Objetivo ${objectiveText(seg,mode)} · ${seg.rpe}</div>
+        <div class="bh-e-progress"><span style="width:${pct}%"></span></div>
+        <div class="bh-e-adjust-label">AJUSTAR ${mode==='run'?'RITMO':'VELOCIDAD'}</div><div class="bh-e-adjust"><button data-minus>−</button><strong>${targetText(seg,mode)}</strong><button data-plus>+</button></div>
+        <div class="bh-e-zone" style="--zone-pos:${pos}%"><i></i></div>
+        <div class="bh-e-timerbox"><strong>${fmtClock(remaining)} restantes</strong><span>${seg.min} min · ${seg.name}</span></div>
+        <div class="bh-e-actions"><button data-pause2>${running?'PAUSAR':'REANUDAR'}</button><button class="next" data-next>${index===plan.length-1?'TERMINAR':'SIGUIENTE'}</button></div>
+        <div class="bh-e-drawer"><div class="bh-e-drawer-head"><span>PLAN DE SESIÓN</span><span>${totalMin(plan)} MIN</span></div>${plan.map((s,i)=>`<button data-jump="${i}" class="${i===index?'current':i<index?'done':''}"><span><b>${s.name}</b><small>${s.min} min</small></span><em>${targetText(s,mode)}</em></button>`).join('')}</div></div>`;
+      const toggle=()=>{running=!running;if(running&&!timer)startTimer();renderSession()};
+      qs('[data-back]',shell).onclick=()=>{running=false;clearInterval(timer);renderPreview()};
+      qs('[data-pause]',shell).onclick=toggle;qs('[data-pause2]',shell).onclick=toggle;
+      qs('[data-minus]',shell).onclick=()=>{if(mode==='run')seg.pace=clamp(seg.pace-5,210,720);else seg.speed=clamp(seg.speed-.5,5,60);renderSession()};
+      qs('[data-plus]',shell).onclick=()=>{if(mode==='run')seg.pace=clamp(seg.pace+5,210,720);else seg.speed=clamp(seg.speed+.5,5,60);renderSession()};
+      qs('[data-next]',shell).onclick=()=>{if(index>=plan.length-1){finished=true;running=false;clearInterval(timer)}else{index++;remaining=plan[index].min*60}renderSession()};
+      qsa('[data-jump]',shell).forEach(b=>b.onclick=()=>{index=Number(b.dataset.jump);remaining=plan[index].min*60;renderSession()});
+      saveState();
+    }
+    renderPreview();
+  }
+  function installLaunch(){
+    if(!location.hash.includes('/app/training'))return;
+    qsa('h4.font-display').forEach(h=>{
+      const name=(h.textContent||'').trim();if(!isEndurance(name))return;
+      let panel=h.closest('div.border');if(!panel)return;
+      if(panel.querySelector('.bh-endurance-launch'))return;
+      const btn=document.createElement('button');btn.className='bh-endurance-launch';btn.textContent='ABRIR SESIÓN GUIADA →';
+      btn.onclick=()=>makeOverlay(name,heroFromPanel(panel));
+      const desc=qsa('p',panel).find(p=>p!==h&&p.textContent);(desc||h).insertAdjacentElement('afterend',btn);
+    })
+  }
+  const obs=new MutationObserver(()=>installLaunch());obs.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('hashchange',()=>setTimeout(installLaunch,50));
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(installLaunch,500));
+  setTimeout(installLaunch,1200);
+})();
+</script>
+<!-- BioHabit V2.20 · Endurance Session Runner / Bike -->
+
 <!-- BioHabit V2.19 · Género + OAuth bootstrap fix -->
 </body>
 </html>
