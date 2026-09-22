@@ -997,8 +997,7 @@ function ED(){
         `${row.portions??1} porción${Number(row.portions??1)===1?"":"es"}`,
         recipe?.kcal?` · ${Math.round(Number(recipe.kcal)*(Number(row.portions)||1))} kcal`:"",
         recipe?.protein_g?` · ${Math.round(Number(recipe.protein_g)*(Number(row.portions)||1))} g proteína`:""
-       ]})
-      ]})
+       ]})      ]})
      ]}),
      f.jsxs("div",{className:"bh-slot-details-v274",children:[
       f.jsxs("div",{children:[
@@ -1394,7 +1393,7 @@ function BHOnboardingGate(){
  const{authState:t}=Bn(),
  [e,i]=R.useState(!0),[a,l]=R.useState(!1),[d,h]=R.useState(0),
  [g,v]=R.useState("BUILD CONSISTENCY"),[y,x]=R.useState(["running","strength"]),
- [w,S]=R.useState(""),[A,k]=R.useState(""),
+ [w,S]=R.useState(""),[A,k]=R.useState(""),[gender,setGender]=R.useState(""),
  [j,N]=R.useState(["L","M","X","J"]),
  [z,D]=R.useState(["none"]),[P,I]=R.useState("order"),
  [F,se]=R.useState(["training","nutrition","habits"]),
@@ -1419,6 +1418,7 @@ function BHOnboardingGate(){
   ["dairy_free","SIN LÁCTEOS"],
   ["gluten_free","SIN GLUTEN"]
  ],
+ genderOptions=[["male","HOMBRE"],["female","MUJER"],["prefer_not_to_say","PREFIERO NO DECIRLO"]],
  nutritionFocus=[
   ["order","COMER MÁS ORDENADO","Tener estructura sin hacerlo complicado."],
   ["protein","SUBIR PROTEÍNA","Priorizar proteína durante el día."],
@@ -1445,10 +1445,13 @@ function BHOnboardingGate(){
    const meta=Ze?.user_metadata||{};
    We(!!meta.newsletter_opt_in);
 
+   // Autocuración: OAuth puede crear auth.users antes de que exista el perfil público.
+   try{await Be.rpc("ensure_user_bootstrap")}catch{}
+
    let pref=null;
    try{
     const{data:Ke}=await Be.from("user_preferences")
-      .select("onboarding_complete,primary_goal,disciplines,training_days,weight_kg,height_cm,nutrition_preferences,primary_nav")
+      .select("onboarding_complete,primary_goal,disciplines,training_days,weight_kg,height_cm,gender,nutrition_preferences,primary_nav")
       .eq("user_id",t.userId).maybeSingle();
     pref=Ke||null
    }catch{}
@@ -1463,6 +1466,7 @@ function BHOnboardingGate(){
    if(Array.isArray(pref?.training_days)&&pref.training_days.length)N(pref.training_days);
    if(pref?.weight_kg!=null)S(String(pref.weight_kg));
    if(pref?.height_cm!=null)k(String(pref.height_cm));
+   if(pref?.gender)setGender(pref.gender);
    const nutrition=pref?.nutrition_preferences||{};
    if(Array.isArray(nutrition.restrictions)&&nutrition.restrictions.length)D(nutrition.restrictions);
    if(nutrition.focus)I(nutrition.focus);
@@ -1492,6 +1496,7 @@ function BHOnboardingGate(){
  function next(){
   if(d===1&&y.length===0){V("Elige al menos una disciplina.");return}
   if(d===2){
+   if(!gender){V("Elige una opción para continuar.");return}
    const weight=Number(w),height=Number(A);
    if(w&&(!Number.isFinite(weight)||weight<=0)){V("Revisa tu peso o déjalo vacío.");return}
    if(A&&(!Number.isFinite(height)||height<=0)){V("Revisa tu altura o déjala vacía.");return}
@@ -1512,6 +1517,7 @@ function BHOnboardingGate(){
          unit_system:"metric",
          weight_kg:w?Number(w):null,
          height_cm:A?Number(A):null,
+         gender,
          training_days:j,
          nutrition_preferences,
          primary_nav:F,
@@ -1533,9 +1539,16 @@ function BHOnboardingGate(){
   if(result.error){
    result=await Be.from("user_preferences").upsert(base,{onConflict:"user_id"})
   }
+  if(result.error&&String(result.error.message||"").includes("user_preferences_user_id_fkey")){
+   try{
+    await Be.rpc("ensure_user_bootstrap");
+    result=await Be.from("user_preferences").upsert(full,{onConflict:"user_id"});
+    if(result.error)result=await Be.from("user_preferences").upsert(base,{onConflict:"user_id"})
+   }catch{}
+  }
   if(result.error){
    const msg=String(result.error.message||"");
-   V(msg.includes("user_preferences_user_id_fkey")?"Tu perfil todavía no terminó de crearse. Cierra sesión, vuelve a entrar e inténtalo otra vez.":msg);
+   V(msg.includes("user_preferences_user_id_fkey")?"Estamos terminando de preparar tu perfil. Intenta nuevamente en unos segundos.":msg);
    ee(!1);return
   }
 
@@ -1594,7 +1607,9 @@ function BHOnboardingGate(){
   d===2&&f.jsxs("section",{children:[
    f.jsx("span",{className:"label-text",style:{color:"var(--green)"},children:"TU PUNTO DE PARTIDA"}),
    f.jsx("h1",{className:"font-display",children:"UN POCO SOBRE TI."}),
-   f.jsx("p",{children:"Peso y altura son opcionales. Nos ayudan a personalizar mejor nutrición y seguimiento."}),
+   f.jsx("p",{children:"Cuéntanos un poco sobre ti. Peso y altura son opcionales; género nos ayuda a dejar listo tu perfil."}),
+   f.jsx("div",{className:"bh-onboarding-subtitle-v211",children:"GÉNERO"}),
+   f.jsx("div",{className:"bh-onboarding-pills-v28 bh-onboarding-gender-v219",children:genderOptions.map(Ze=>f.jsx("button",{type:"button",onClick:()=>setGender(Ze[0]),className:gender===Ze[0]?"active":"",children:Ze[1]},Ze[0]))}),
    f.jsxs("div",{className:"bh-onboarding-body-v211",children:[
     f.jsxs("label",{children:[
      f.jsx("span",{children:"PESO"}),
@@ -1611,7 +1626,7 @@ function BHOnboardingGate(){
      ]})
     ]})
    ]}),
-   f.jsx("small",{className:"bh-onboarding-note-v28",children:"Puedes dejar ambos vacíos y agregarlos después desde YO → Ajustes."})
+   f.jsx("small",{className:"bh-onboarding-note-v28",children:"Peso y altura pueden dejarse vacíos. Todo esto puede editarse después desde YO → Ajustes."})
   ]}),
 
   d===3&&f.jsxs("section",{children:[
@@ -1646,7 +1661,7 @@ function BHOnboardingGate(){
 
   f.jsxs("footer",{children:[
    f.jsx("button",{onClick:()=>{V("");h(Ze=>Math.max(0,Ze-1))},disabled:d===0,className:"secondary",children:"← ATRÁS"}),
-   d<5?f.jsx("button",{onClick:next,className:"primary",children:d===2?"CONTINUAR · ES OPCIONAL →":"CONTINUAR →"}):f.jsx("button",{onClick:finish,disabled:W,className:"primary",children:W?"GUARDANDO…":"TERMINAR →"})
+   d<5?f.jsx("button",{onClick:next,className:"primary",children:"CONTINUAR →"}):f.jsx("button",{onClick:finish,disabled:W,className:"primary",children:W?"GUARDANDO…":"TERMINAR →"})
   ]})
  ]})})
 }
@@ -1933,6 +1948,10 @@ function BHProfile(){
  ]})
 ]}),
 f.jsxs("div",{className:"bh-profile-nutrition-v211",children:[
+ f.jsx("span",{className:"label-text",children:"GÉNERO"}),
+ f.jsx("div",{className:"bh-profile-pref-pills-v211",children:[["male","HOMBRE"],["female","MUJER"],["prefer_not_to_say","PREFIERO NO DECIRLO"]].map(ve=>f.jsx("button",{type:"button",onClick:()=>W({gender:ve[0]}),className:l?.gender===ve[0]?"active":"",children:ve[1]},ve[0]))})
+]}),
+f.jsxs("div",{className:"bh-profile-nutrition-v211",children:[
  f.jsx("span",{className:"label-text",children:"PREFERENCIAS DE NUTRICIÓN"}),
  f.jsx("div",{className:"bh-profile-pref-pills-v211",children:[
   ["none","SIN RESTRICCIONES"],["vegetarian","VEGETARIANA"],["vegan","VEGANA"],["dairy_free","SIN LÁCTEOS"],["gluten_free","SIN GLUTEN"]
@@ -1977,8 +1996,7 @@ function bhDemoHabitState(t){
    e.habits=e.habits.map(bhNormalizeHabit);
    e.entries=e.entries||{};
    return e
-  }
- }catch{}
+  } }catch{}
  const e=bhDemoHabits(),i={},a={};
  bhWeekDates().forEach((l,d)=>{
   e.forEach((h,g)=>{
@@ -2977,8 +2995,7 @@ html{scroll-behavior:smooth}body{overscroll-behavior-y:auto;-webkit-overflow-scr
 </style>
 
 
-<style id="biohabit-v2-2-interaction-repair">
-html,body,#root{min-height:100%;width:100%}
+<style id="biohabit-v2-2-interaction-repair">html,body,#root{min-height:100%;width:100%}
 html,body{overflow-x:hidden}
 body:not(:has([role="dialog"][aria-modal="true"])){overflow-y:auto!important;position:static!important;height:auto!important}
 #root{overflow:visible!important;touch-action:pan-y pinch-zoom}
@@ -3976,5 +3993,10 @@ button,a,input,select,textarea{touch-action:manipulation}
 })();
 </script>
 
+
+<style id="bh-v219-gender">.bh-onboarding-gender-v219{margin:12px 0 20px}.bh-onboarding-gender-v219 button{min-width:0}
+@media(max-width:640px){.bh-onboarding-gender-v219{display:grid!important;grid-template-columns:1fr!important}.bh-onboarding-gender-v219 button{width:100%}}
+</style>
+<!-- BioHabit V2.19 · Género + OAuth bootstrap fix -->
 </body>
 </html>
