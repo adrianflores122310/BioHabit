@@ -1754,7 +1754,7 @@ function bhTodayLabel(){return["DOMINGO","LUNES","MARTES","MIÉRCOLES","JUEVES",
 }
 
 function BHHabits(){
- const{authState:t}=Bn(),[,e]=Eo(),[i,a]=R.useState({habits:[],logs:{},entries:{},source:"none"}),[l,d]=R.useState(!0),[err,setErr]=R.useState(""),[editor,setEditor]=R.useState(null),[timers,setTimers]=R.useState({}),[clock,setClock]=R.useState(Date.now()),[viewMode,setViewMode]=R.useState("today"),v=bhWeekDates(),today=new Date(),todayKey=bhLocalDateKey(today);
+ const{authState:t}=Bn(),[,e]=Eo(),[i,a]=R.useState({habits:[],logs:{},entries:{},source:"none"}),[l,d]=R.useState(!0),[err,setErr]=R.useState(""),[editor,setEditor]=R.useState(null),[timers,setTimers]=R.useState({}),[sleepDrafts,setSleepDrafts]=R.useState({}),[clock,setClock]=R.useState(Date.now()),[viewMode,setViewMode]=R.useState("today"),v=bhWeekDates(),today=new Date(),todayKey=bhLocalDateKey(today);
  const y=R.useCallback(()=>{if(!t.isAuthenticated){d(!1);return}d(!0);bhSafeHabitBundle(t).then(x=>{a(x);d(!1)}).catch(()=>{a({...bhDemoHabitState(t),source:"fallback"});d(!1)})},[t.userId,t.isAuthenticated,t.displayName]);
  R.useEffect(()=>{y()},[y]);
  R.useEffect(()=>{if(!Object.keys(timers).length)return;const id=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(id)},[Object.keys(timers).join("|")]);
@@ -1767,6 +1767,9 @@ function BHHabits(){
  function startTimer(h){const base=Number(entryFor(h)?.duration_seconds||0);setTimers(x=>({...x,[h.id]:{startedAt:Date.now(),base}}))}
  async function pauseTimer(h){const total=timerSeconds(h);setTimers(x=>{const n={...x};delete n[h.id];return n});await reloadResult(await bhSetHabitProgress(t,h,today,null,total))}
  async function addTimerMinutes(h,min){const run=timers[h.id],total=timerSeconds(h)+Number(min||0)*60;if(run)setTimers(x=>{const n={...x};delete n[h.id];return n});await reloadResult(await bhSetHabitProgress(t,h,today,null,total))}
+ function sleepDraft(h,row){const saved=row?.metadata||{},draft=sleepDrafts[h.id];return draft||{sleep_start:saved.sleep_start||"23:00",wake_time:saved.wake_time||"07:00"}}
+ function setSleepField(h,key,value){setSleepDrafts(x=>({...x,[h.id]:{...sleepDraft(h,entryFor(h)),[key]:value}}))}
+ async function saveSleep(h){const draft=sleepDraft(h,entryFor(h)),hours=bhSleepDurationHours(draft.sleep_start,draft.wake_time);if(!hours||hours>18){setErr("Revisa tus horarios de sueño. BioHabit acepta un descanso de hasta 18 horas.");return}const result=await bhSetHabitProgress(t,h,today,hours,null,{sleep_start:draft.sleep_start,wake_time:draft.wake_time,entry_mode:"manual"});if(result?.ok)setSleepDrafts(x=>{const n={...x};delete n[h.id];return n});await reloadResult(result)}
  function openEditor(h=null){const base=h?bhNormalizeHabit(h):{name:"",category:"personal",habit_type:"check",target_value:1,target_unit:"vez",increment_step:1,description:"",days_of_week:[1,2,3,4,5,6,7],active:!0,sort_order:(i.habits.length+1)*10};setEditor({...base,days_of_week:[...(base.days_of_week||[1,2,3,4,5,6,7])]});setErr("")}
  function editField(key,value){setEditor(x=>({...x,[key]:value}))}
  function toggleEditorDay(day){setEditor(x=>{const days=x.days_of_week||[],next=days.includes(day)?days.filter(d=>d!==day):[...days,day].sort((a,b)=>a-b);return{...x,days_of_week:next}})}
@@ -1787,6 +1790,7 @@ function BHHabits(){
   cardProgress=viewMode==="week"?weekProgress:progress,
   nm=String(h.name||"").toLowerCase(),unit=String(h.target_unit||"").toLowerCase(),
   kind=(unit==="l"||nm.includes("agua")||nm.includes("hidrat"))?"water":(unit.includes("paso")||nm.includes("pasos"))?"steps":(unit==="h"&&(nm.includes("dorm")||nm.includes("sueñ")))?"sleep":(h.habit_type==="timer"&&(nm.includes("leer")||nm.includes("lectura")))?"reading":h.habit_type==="timer"?"mind":h.habit_type==="derived"?"training":"check";
+  const sleepData=kind==="sleep"?sleepDraft(h,row):null,sleepPreview=kind==="sleep"?bhSleepDurationHours(sleepData.sleep_start,sleepData.wake_time):0;
 
   let mainValue="",mainUnit="",caption="";
   if(viewMode==="week"){
@@ -1808,6 +1812,16 @@ function BHHabits(){
   else if(h.habit_type==="quantity"&&kind==="water")control=f.jsxs("div",{className:"bh-water-actions-v217",children:[
    f.jsx("button",{className:"primary",onClick:()=>setQuantity(h,value+step),children:"REGISTRAR VASO"}),
    f.jsxs("div",{className:"bh-water-adjust-v217",children:[f.jsx("button",{onClick:()=>setQuantity(h,Math.max(0,value-step)),children:"−"}),f.jsxs("label",{children:[f.jsx("input",{key:String(value),type:"number",min:"0",step:String(step),defaultValue:bhHabitNumber(value),onBlur:x=>setQuantity(h,x.target.value)}),f.jsx("span",{children:h.target_unit||""})]}),f.jsx("button",{onClick:()=>setQuantity(h,value+step),children:"+"})]})
+  ]});
+  else if(h.habit_type==="quantity"&&kind==="sleep")control=f.jsxs("div",{className:"bh-sleep-manual-v218",children:[
+   f.jsx("div",{className:"bh-sleep-manual-note-v218",children:"REGISTRO MANUAL · SIN WEARABLE"}),
+   f.jsxs("div",{className:"bh-sleep-time-grid-v218",children:[
+    f.jsxs("label",{children:[f.jsx("span",{children:"ME DORMÍ"}),f.jsx("input",{type:"time",value:sleepData.sleep_start,onChange:x=>setSleepField(h,"sleep_start",x.target.value)})]}),
+    f.jsxs("label",{children:[f.jsx("span",{children:"INICIO DEL DÍA"}),f.jsx("input",{type:"time",value:sleepData.wake_time,onChange:x=>setSleepField(h,"wake_time",x.target.value)})]})
+   ]}),
+   f.jsxs("div",{className:"bh-sleep-duration-preview-v218",children:[f.jsx("span",{children:"DURACIÓN CALCULADA"}),f.jsx("strong",{children:bhFormatSleepDuration(sleepPreview)})]}),
+   f.jsx("button",{className:"primary",onClick:()=>saveSleep(h),children:"GUARDAR SUEÑO →"}),
+   f.jsx("small",{children:"BioHabit calcula automáticamente la diferencia entre ambos horarios, incluso si cruzas medianoche."})
   ]});
   else if(h.habit_type==="quantity")control=f.jsxs("div",{className:"bh-figma-stepper-v216",children:[
    f.jsx("button",{onClick:()=>setQuantity(h,Math.max(0,value-step)),children:"−"}),
@@ -1835,7 +1849,7 @@ function BHHabits(){
    ]}),
    cups,
    kind==="reading"&&viewMode==="today"&&f.jsx("div",{className:"bh-habit-quote-v217",children:"“Un buen libro siempre te lleva más lejos.”"}),
-   kind==="sleep"&&viewMode==="today"&&f.jsxs("div",{className:"bh-sleep-times-v217",children:[f.jsxs("div",{children:[f.jsx("span",{children:"META"}),f.jsx("strong",{children:`${bhHabitNumber(Number(h.target_value||8))} h`})]}),f.jsxs("div",{children:[f.jsx("span",{children:"HOY"}),f.jsx("strong",{children:`${bhHabitNumber(value)} h`})]})]}),
+   kind==="sleep"&&viewMode==="today"&&f.jsxs("div",{className:"bh-sleep-times-v217",children:[f.jsxs("div",{children:[f.jsx("span",{children:"HORARIO REGISTRADO"}),f.jsx("strong",{children:row?.metadata?.sleep_start&&row?.metadata?.wake_time?`${row.metadata.sleep_start} → ${row.metadata.wake_time}`:"SIN REGISTRO"})]}),f.jsxs("div",{children:[f.jsx("span",{children:"DURACIÓN"}),f.jsx("strong",{children:value?bhFormatSleepDuration(value):`META ${bhHabitNumber(Number(h.target_value||8))} h`})]})]}),
    kind==="mind"&&viewMode==="today"&&f.jsx("div",{className:"bh-mind-prompt-v217",children:"Respira. Observa. Regresa a lo que sí importa."}),
    bars,
    control,
@@ -2072,10 +2086,12 @@ function bhHabitProgress(h,entry){
  const target=Number(h?.target_value||0),value=bhHabitValue(h,entry);return target?Math.max(0,Math.min(100,Math.round(value/target*100))):0
 }
 function bhHabitNumber(value){const n=Number(value||0);return Number.isInteger(n)?String(n):String(Math.round(n*100)/100)}
+function bhSleepDurationHours(start,end){const parse=v=>{const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||""));if(!m)return null;const h=Number(m[1]),min=Number(m[2]);if(h<0||h>23||min<0||min>59)return null;return h*60+min},a=parse(start),b=parse(end);if(a==null||b==null||a===b)return 0;let diff=b-a;if(diff<0)diff+=1440;return Math.round(diff/60*100)/100}
+function bhFormatSleepDuration(hours){const total=Math.max(0,Math.round(Number(hours||0)*60)),h=Math.floor(total/60),m=total%60;return h?`${h} h${m?` ${m} min`:""}`:`${m} min`}
 function bhHabitStatusText(h,entry,done){
  if(h?.habit_type==="derived")return done?"AUTOMÁTICO · HECHO":"SE COMPLETA CON TRAINING";
  if(h?.habit_type==="timer")return `${Math.floor(Number(entry?.duration_seconds||0)/60)} / ${bhHabitNumber(h.target_value)} MIN`;
- if(h?.habit_type==="quantity")return `${bhHabitNumber(entry?.value_numeric||0)} / ${bhHabitNumber(h.target_value)} ${h.target_unit||""}`.trim();
+ if(h?.habit_type==="quantity"){const nm=String(h?.name||"").toLowerCase(),unit=String(h?.target_unit||"").toLowerCase();if(unit==="h"&&(nm.includes("dorm")||nm.includes("sueñ")))return `${bhFormatSleepDuration(entry?.value_numeric||0)} / ${bhFormatSleepDuration(h.target_value||0)}`;return `${bhHabitNumber(entry?.value_numeric||0)} / ${bhHabitNumber(h.target_value)} ${h.target_unit||""}`.trim()}
  return done?"HECHO":"PENDIENTE"
 }
 function bhHabitTypeLabel(h){return({check:"CHECK",quantity:"META",timer:"TEMPORIZADOR",derived:"AUTOMÁTICO"})[h?.habit_type]||"HÁBITO"}
@@ -2094,20 +2110,20 @@ async function bhEnsureHabitRow(t,h){
   if(error)throw error;return bhNormalizeHabit(data)
  }catch{return h}
 }
-async function bhSetHabitProgress(t,h,date,valueNumeric,durationSeconds){
+async function bhSetHabitProgress(t,h,date,valueNumeric,durationSeconds,metadata={}){
  const keyDate=bhLocalDateKey(date||new Date),habit=bhNormalizeHabit(h);
  if(habit.habit_type==="derived")return{ok:!1,error:"Este hábito se completa automáticamente."};
  let completed=habit.habit_type==="timer"?Number(durationSeconds||0)>=Number(habit.target_value||0)*60:habit.habit_type==="quantity"?Number(valueNumeric||0)>=Number(habit.target_value||0):Number(valueNumeric||0)>0;
  if(!t?.userId){
   const state=bhDemoHabitState(t),real=state.habits.find(x=>String(x.id)===String(habit.id))||habit;
   state.habits.some(x=>String(x.id)===String(real.id))||state.habits.push(real);
-  const k=real.id+"|"+keyDate,row={habit_id:real.id,log_date:keyDate,completed,value_numeric:Number(valueNumeric||0),duration_seconds:durationSeconds==null?null:Math.max(0,Math.round(Number(durationSeconds)||0)),metadata:{}};
+  const k=real.id+"|"+keyDate,row={habit_id:real.id,log_date:keyDate,completed,value_numeric:Number(valueNumeric||0),duration_seconds:durationSeconds==null?null:Math.max(0,Math.round(Number(durationSeconds)||0)),metadata:metadata||{}};
   state.logs[k]=completed;state.entries=state.entries||{};state.entries[k]=row;bhSaveDemoHabitState(t,state);return{ok:!0,habit:real,row}
  }
  try{
   const real=await bhEnsureHabitRow(t,habit);
   if(!bhIsUuid(real.id))throw new Error("No se pudo guardar el hábito en tu cuenta.");
-  const row={user_id:t.userId,habit_id:real.id,log_date:keyDate,completed,value_numeric:Number(valueNumeric||0),duration_seconds:durationSeconds==null?null:Math.max(0,Math.round(Number(durationSeconds)||0)),completed_at:completed?new Date().toISOString():null,updated_at:new Date().toISOString()};
+  const row={user_id:t.userId,habit_id:real.id,log_date:keyDate,completed,value_numeric:Number(valueNumeric||0),duration_seconds:durationSeconds==null?null:Math.max(0,Math.round(Number(durationSeconds)||0)),metadata:metadata||{},completed_at:completed?new Date().toISOString():null,updated_at:new Date().toISOString()};
   const{error}=await Be.from("bh_habit_logs").upsert(row,{onConflict:"user_id,habit_id,log_date"});if(error)throw error;return{ok:!0,habit:real,row}
  }catch(error){return{ok:!1,error:error?.message||"No se pudo guardar el progreso."}}
 }
@@ -3906,6 +3922,9 @@ button,a,input,select,textarea{touch-action:manipulation}
 @media(max-width:700px){.bh-habit-grid-v215{grid-template-columns:1fr!important}.bh-habit-card-v216{padding:.8rem!important}.bh-habit-daystrip-copy-v217{min-width:0}.bh-habit-balance-v216{grid-template-columns:86px 1fr!important}.bh-habit-metrics-v216{grid-column:1/-1}.bh-balance-ring-v216{width:78px!important;height:78px!important}}
 @media(max-width:520px){.bh-habit-days-mini-v217{gap:.18rem;grid-template-columns:repeat(7,minmax(0,1fr))}.bh-habit-days-mini-v217>div{padding:.4rem .12rem;border-radius:10px}.bh-habit-days-mini-v217 i{display:none}.bh-habit-visual-v216{grid-template-columns:96px 1fr!important}.bh-habit-ring-v216{width:90px!important;height:90px!important}.bh-habit-visual-copy-v216>p{font-size:.55rem!important}}
 @media(max-width:380px){.bh-habit-visual-v216{grid-template-columns:1fr!important;text-align:center;justify-items:center}.bh-habit-visual-copy-v216{justify-items:center}.bh-habit-days-mini-v217 strong{font-size:.95rem}}
+
+/* BioHabit V2.18 · Sueño manual */
+.bh-sleep-manual-v218{display:grid;gap:12px;margin-top:2px}.bh-sleep-manual-note-v218{font-size:9px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}.bh-sleep-time-grid-v218{display:grid;grid-template-columns:1fr 1fr;gap:10px}.bh-sleep-time-grid-v218 label{display:grid;gap:6px;padding:12px;border:1px solid var(--line);background:rgba(255,255,255,.54)}.bh-sleep-time-grid-v218 label span{font-size:9px;letter-spacing:.14em;color:var(--muted)}.bh-sleep-time-grid-v218 input[type=time]{width:100%;border:0;background:transparent;font-family:inherit;font-size:21px;font-weight:700;color:var(--text);outline:none}.bh-sleep-duration-preview-v218{display:flex;align-items:end;justify-content:space-between;padding:12px 0 2px;border-top:1px solid var(--line)}.bh-sleep-duration-preview-v218 span{font-size:9px;letter-spacing:.14em;color:var(--muted)}.bh-sleep-duration-preview-v218 strong{font-size:20px}.bh-sleep-manual-v218>.primary{min-height:46px;width:100%;background:var(--green);color:white;border:0}.bh-sleep-manual-v218>small{font-size:10px;line-height:1.45;color:var(--muted)}.kind-sleep .bh-habit-ring-v216{--bh-accent:#8b80b8}.kind-sleep .bh-habit-ring-v216:before{background:conic-gradient(#8b80b8 var(--bh-p),var(--bg3) 0)}@media(max-width:560px){.bh-sleep-time-grid-v218{grid-template-columns:1fr}.bh-sleep-time-grid-v218 input[type=time]{font-size:24px}}
 </style>
 
 </head>
